@@ -330,20 +330,46 @@ function updateCheckinBtn(hi) {
 }
 
 function deleteHabit(hi) {
-  // Custom in-page confirm to avoid browser dialog blocking
-  const name = habits[hi].name;
   const confirmed = window._deleteConfirm === hi;
   if (!confirmed) {
     window._deleteConfirm = hi;
     const btn = document.querySelector(`#hcard-${hi} .btn-icon.danger`);
-    if (btn) { btn.textContent = 'CONFIRM?'; btn.style.borderColor = '#ff4444'; btn.style.color = '#ff4444'; }
+    if (btn) {
+      btn.textContent = 'CONFIRM?';
+      btn.style.borderColor = '#ff4444';
+      btn.style.color = '#ff4444';
+      // show small tooltip below button
+      const tip = document.createElement('div');
+      tip.id = `delete-tip-${hi}`;
+      tip.style.cssText = `
+        position: absolute;
+        font-size: 9px;
+        color: #ff4444;
+        letter-spacing: 0.1em;
+        margin-top: 4px;
+        white-space: nowrap;
+        font-family: 'JetBrains Mono', monospace;
+      `;
+      tip.textContent = 'click again to delete';
+      btn.style.position = 'relative';
+      btn.parentNode.style.position = 'relative';
+      btn.insertAdjacentElement('afterend', tip);
+    }
     setTimeout(() => {
       window._deleteConfirm = null;
-      if (btn) { btn.textContent = 'DELETE'; btn.style.borderColor = ''; btn.style.color = ''; }
+      const tip = document.getElementById(`delete-tip-${hi}`);
+      if (tip) tip.remove();
+      if (btn) {
+        btn.textContent = 'DELETE';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }
     }, 2500);
     return;
   }
   window._deleteConfirm = null;
+  const tip = document.getElementById(`delete-tip-${hi}`);
+  if (tip) tip.remove();
   habits.splice(hi, 1);
   saveData();
   render();
