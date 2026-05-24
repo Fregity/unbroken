@@ -561,3 +561,21 @@ main {
   header, main, #export-bar { padding-left: 20px; padding-right: 20px; }
   .habit-stats { gap: 14px; }
 }
+
+/* ── MOBILE TOUCH TARGETS ── */
+@media (max-width: 768px) {
+  .cell {
+    width: 16px;
+    height: 16px;
+  }
+
+  .cell::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
+
+  .grid-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+}
