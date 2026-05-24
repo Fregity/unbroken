@@ -340,6 +340,7 @@ function deleteHabit(hi) {
       btn.style.color = '#ff4444';
       btn.style.lineHeight = '1.4';
       btn.style.padding = '4px 12px';
+      btn.style.whiteSpace = 'nowrap';
     }
     setTimeout(() => {
       window._deleteConfirm = null;
@@ -349,6 +350,7 @@ function deleteHabit(hi) {
         btn.style.color = '';
         btn.style.lineHeight = '';
         btn.style.padding = '';
+        btn.style.whiteSpace = '';
       }
     }, 2500);
     return;
