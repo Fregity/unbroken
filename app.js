@@ -335,27 +335,31 @@ function deleteHabit(hi) {
     window._deleteConfirm = hi;
     const btn = document.querySelector(`#hcard-${hi} .btn-icon.danger`);
     if (btn) {
-      btn.innerHTML = 'CONFIRM?<br><span style="font-size:8px;opacity:0.7;letter-spacing:0.08em">click again</span>';
+      btn.textContent = 'CONFIRM?';
       btn.style.borderColor = '#ff4444';
       btn.style.color = '#ff4444';
-      btn.style.lineHeight = '1.4';
-      btn.style.padding = '4px 12px';
-      btn.style.whiteSpace = 'nowrap';
     }
+    // reuse the existing tooltip
+    const tt = document.getElementById('tooltip');
+    tt.textContent = 'click again to delete';
+    tt.style.display = 'block';
+    const rect = btn.getBoundingClientRect();
+    tt.style.left = rect.left + rect.width / 2 + 'px';
+    tt.style.top = (rect.top - 10) + 'px';
+
     setTimeout(() => {
       window._deleteConfirm = null;
+      tt.style.display = 'none';
       if (btn) {
-        btn.innerHTML = 'DELETE';
+        btn.textContent = 'DELETE';
         btn.style.borderColor = '';
         btn.style.color = '';
-        btn.style.lineHeight = '';
-        btn.style.padding = '';
-        btn.style.whiteSpace = '';
       }
     }, 2500);
     return;
   }
   window._deleteConfirm = null;
+  document.getElementById('tooltip').style.display = 'none';
   habits.splice(hi, 1);
   saveData();
   render();
