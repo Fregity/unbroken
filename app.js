@@ -273,8 +273,51 @@ function checkInToday(hi) {
   if (!habit.checked.includes(today)) {
     habit.checked.push(today);
     saveData();
-    render();
+    updateCell(today, hi);
+    updateStats(hi);
+    updateCheckinBtn(hi);
   }
+}
+
+function updateCell(date, hi) {
+  const habit = habits[hi];
+  const checked = new Set(habit.checked || []);
+  // find by data-date within the specific habit card
+  const card = document.getElementById(`hcard-${hi}`);
+  if (!card) return;
+  const cell = card.querySelector(`.cell[data-date="${date}"]`);
+  if (!cell) return;
+  if (checked.has(date)) {
+    cell.classList.add('filled');
+    cell.style.background = habit.color;
+  } else {
+    cell.classList.remove('filled');
+    cell.style.background = '';
+  }
+}
+
+function updateStats(hi) {
+  const stats = calcStats(habits[hi]);
+  const card = document.getElementById(`hcard-${hi}`);
+  if (!card) return;
+  const vals = card.querySelectorAll('.stat-val');
+  if (vals.length < 4) return;
+  vals[0].textContent = stats.streak;
+  vals[1].textContent = stats.longest;
+  vals[2].textContent = stats.total;
+  vals[3].textContent = stats.rate + '%';
+}
+
+function updateCheckinBtn(hi) {
+  const card = document.getElementById(`hcard-${hi}`);
+  if (!card) return;
+  const btn = card.querySelector('.btn-checkin');
+  if (!btn) return;
+  const habit = habits[hi];
+  btn.textContent = '✓ LOGGED TODAY';
+  btn.className = 'btn-checkin done';
+  btn.style.background = '';
+  btn.style.color = '';
 }
 
 function deleteHabit(hi) {
@@ -295,34 +338,6 @@ function deleteHabit(hi) {
   habits.splice(hi, 1);
   saveData();
   render();
-}
-
-function updateCell(date, hi) {
-  const habit = habits[hi];
-  const checked = new Set(habit.checked || []);
-  const cell = document.querySelector(
-    `.cell[data-date="${date}"][data-habit="${hi}"]`
-  );
-  if (!cell) return;
-  if (checked.has(date)) {
-    cell.classList.add('filled');
-    cell.style.background = habit.color;
-  } else {
-    cell.classList.remove('filled');
-    cell.style.background = '';
-  }
-}
-
-function updateStats(hi) {
-  const stats = calcStats(habits[hi]);
-  const card = document.getElementById(`hcard-${hi}`);
-  if (!card) return;
-  const vals = card.querySelectorAll('.stat-val');
-  // order: streak, longest, total, rate
-  vals[0].textContent = stats.streak;
-  vals[1].textContent = stats.longest;
-  vals[2].textContent = stats.total;
-  vals[3].textContent = stats.rate + '%';
 }
 
 // ── TOOLTIP ──
