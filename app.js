@@ -513,11 +513,13 @@ function exportCard(share = false) {
             title: 'Unbroken — My year in pixels',
             files: [file]
           });
-          return;
+          return; // shared successfully, stop here no matter what
         }
       } catch(e) {
-        // user cancelled or share failed, fall through
+        if (e.name === 'AbortError') return; // user cancelled, don't download
+        // only fall through to clipboard/download on genuine errors
       }
+      return; // canShare returned false, don't download either
     }
     if (share) {
       try {
