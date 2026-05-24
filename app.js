@@ -354,13 +354,10 @@ function showTooltip(e, date, hi, inYear) {
   if (!inYear) return;
   const tt = document.getElementById('tooltip');
   const [y, m, d] = date.split('-');
-  const habit = habits[hi];
-  const checked = new Set(habit ? habit.checked || [] : []);
-  const filled = checked.has(date);
-  tt.textContent = `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y} · ${filled ? '✓ logged' : 'not logged'}`;
+  tt.textContent = `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
   tt.style.display = 'block';
   tt.style.left = e.clientX + 'px';
-  tt.style.top = e.clientY + 'px';
+  tt.style.top = (e.clientY - 5) + 'px';
 }
 
 function hideTooltip() {
