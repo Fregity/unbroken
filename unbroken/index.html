@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unbroken — Your year in pixels</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="logo">Un<span>broken</span></div>
+    <div class="header-right">
+      <span class="year-label" id="year-label"></span>
+      <button class="btn-add" id="btn-add-header" onclick="openModal()">+ ADD HABIT</button>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <main class="main-pad">
+    <div id="empty-state">
+      <div class="empty-title">Your year,<br><em>in pixels.</em></div>
+      <div class="empty-sub">// No account. No fluff. Don't break the chain.</div>
+      <button class="btn-start" onclick="openModal()">START TRACKING →</button>
+    </div>
+    <div id="habits-container"></div>
+  </main>
+
+  <!-- ── EXPORT BAR ── -->
+  <div id="export-bar" style="display:none">
+    <span class="export-label">// UNBROKEN · YOUR YEAR IN PIXELS</span>
+    <div class="export-actions">
+      <button class="btn-export secondary" onclick="exportCard()">↓ SAVE CARD</button>
+      <button class="btn-export" onclick="exportCard()">SHARE CARD ↗</button>
+    </div>
+  </div>
+
+  <!-- ── TOOLTIP ── -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- ── HIDDEN CANVAS (card export) ── -->
+  <canvas id="export-canvas"></canvas>
+
+  <!-- ── ADD HABIT MODAL ── -->
+  <div class="modal-overlay" id="modal" style="display:none" onclick="closeModalOutside(event)">
+    <div class="modal">
+      <div class="modal-title">New Habit</div>
+      <div class="field">
+        <label>Habit Name</label>
+        <input
+          type="text"
+          id="habit-name-input"
+          placeholder="e.g. daily coding"
+          maxlength="32"
+          onkeydown="if(event.key==='Enter') saveHabit()"
+        >
+      </div>
+      <div class="field">
+        <label>Color</label>
+        <div class="color-picker" id="color-picker"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal cancel" onclick="closeModal()">CANCEL</button>
+        <button class="btn-modal primary" onclick="saveHabit()">CREATE →</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
