@@ -379,7 +379,7 @@ function showTooltip(e, date, hi, inYear) {
   tt.textContent = `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
   tt.style.display = 'block';
   tt.style.left = e.clientX + 'px';
-  tt.style.top = (e.clientY - 5) + 'px';
+  tt.style.top = (e.clientY - 8) + 'px';
 }
 
 function hideTooltip() {
