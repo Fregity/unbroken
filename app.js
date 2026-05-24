@@ -262,7 +262,8 @@ function toggleDay(date, hi, blocked) {
   if (idx === -1) habit.checked.push(date);
   else habit.checked.splice(idx, 1);
   saveData();
-  render();
+  updateCell(date, hi);
+  updateStats(hi);
 }
 
 function checkInToday(hi) {
@@ -294,6 +295,34 @@ function deleteHabit(hi) {
   habits.splice(hi, 1);
   saveData();
   render();
+}
+
+function updateCell(date, hi) {
+  const habit = habits[hi];
+  const checked = new Set(habit.checked || []);
+  const cell = document.querySelector(
+    `.cell[data-date="${date}"][data-habit="${hi}"]`
+  );
+  if (!cell) return;
+  if (checked.has(date)) {
+    cell.classList.add('filled');
+    cell.style.background = habit.color;
+  } else {
+    cell.classList.remove('filled');
+    cell.style.background = '';
+  }
+}
+
+function updateStats(hi) {
+  const stats = calcStats(habits[hi]);
+  const card = document.getElementById(`hcard-${hi}`);
+  if (!card) return;
+  const vals = card.querySelectorAll('.stat-val');
+  // order: streak, longest, total, rate
+  vals[0].textContent = stats.streak;
+  vals[1].textContent = stats.longest;
+  vals[2].textContent = stats.total;
+  vals[3].textContent = stats.rate + '%';
 }
 
 // ── TOOLTIP ──
