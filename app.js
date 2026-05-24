@@ -412,40 +412,33 @@ function saveHabit() {
 }
 
 // ── EXPORT ──
-function exportCard() {
+function exportCard(share = false) {
   const canvas = document.getElementById('export-canvas');
   const ctx = canvas.getContext('2d');
-
   const W        = 900;
   const HABIT_H  = 160;
   const HEADER_H = 80;
   const FOOTER_H = 60;
   const PAD      = 48;
   const H        = HEADER_H + habits.length * HABIT_H + FOOTER_H + PAD;
-
   canvas.width  = W;
   canvas.height = H;
-
   // Background
   ctx.fillStyle = '#0e0e0e';
   ctx.fillRect(0, 0, W, H);
-
   // Subtle horizontal rules
   ctx.strokeStyle = 'rgba(255,255,255,0.03)';
   ctx.lineWidth = 1;
   for (let y = 0; y < H; y += 28) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
   }
-
   // Header
   ctx.fillStyle = '#e8e8e8';
   ctx.font = 'bold 22px "JetBrains Mono", monospace';
   ctx.fillText('UNBROKEN', PAD, 52);
-
   ctx.fillStyle = '#444';
   ctx.font = '13px "JetBrains Mono", monospace';
   ctx.fillText(`// ${currentYear()} · ${todayStr()}`, PAD + 130, 52);
-
   // Habits
   const weeks  = buildYearGrid();
   const CELL   = 10;
@@ -453,17 +446,14 @@ function exportCard() {
   const GRID_W = weeks.length * (CELL + GAP);
   const xStart = (W - GRID_W) / 2;
   const today  = todayStr();
-
   habits.forEach((habit, hi) => {
     const y0      = HEADER_H + hi * HABIT_H;
     const checked = new Set(habit.checked || []);
     const stats   = calcStats(habit);
-
     // Name
     ctx.fillStyle = habit.color;
     ctx.font = 'bold 14px "JetBrains Mono", monospace';
     ctx.fillText(habit.name.toUpperCase(), PAD, y0 + 22);
-
     // Stats line
     ctx.fillStyle = '#666';
     ctx.font = '11px "JetBrains Mono", monospace';
@@ -471,7 +461,6 @@ function exportCard() {
       `${stats.streak} streak · ${stats.longest} best · ${stats.total} days · ${stats.rate}% rate`,
       PAD, y0 + 40
     );
-
     // Grid
     const gridY = y0 + 55;
     weeks.forEach((week, wi) => {
@@ -481,12 +470,10 @@ function exportCard() {
         const cy       = gridY  + di * (CELL + GAP);
         const isFilled = checked.has(cell.date);
         const isFuture = cell.date > today;
-
         ctx.fillStyle = isFilled ? habit.color : isFuture ? '#131313' : '#1c1c1c';
         ctx.beginPath();
         ctx.roundRect(cx, cy, CELL, CELL, 1.5);
         ctx.fill();
-
         // Today outline
         if (cell.date === today) {
           ctx.strokeStyle = '#e8e8e8';
@@ -498,17 +485,14 @@ function exportCard() {
       });
     });
   });
-
   // Footer rule
   ctx.fillStyle = '#2a2a2a';
   ctx.fillRect(0, H - FOOTER_H, W, 1);
-
   // Footer left
   ctx.fillStyle = '#444';
   ctx.font = '11px "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
   ctx.fillText('unbroken.fyi · your year in pixels', PAD, H - 22);
-
   // Footer right
   const totalDays = habits.reduce((s, h) =>
     s + (h.checked || []).filter(d => d.startsWith(String(currentYear()))).length, 0
@@ -518,11 +502,45 @@ function exportCard() {
   ctx.fillText(`${totalDays} total check-ins this year`, W - PAD, H - 22);
   ctx.textAlign = 'left';
 
-  // Trigger download
-  const link = document.createElement('a');
-  link.download = `unbroken-${currentYear()}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  // ── SHARE OR DOWNLOAD ──
+  canvas.toBlob(async (blob) => {
+    if (share && navigator.share && navigator.canShare) {
+      try {
+        const file = new File([blob], `unbroken-${currentYear()}.png`,
+          { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'Unbroken — My year in pixels',
+            files: [file]
+          });
+          return;
+        }
+      } catch(e) {
+        // user cancelled or share failed, fall through
+      }
+    }
+    if (share) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        const btn = document.querySelector('.btn-export:not(.secondary)');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = 'COPIED ✓';
+          setTimeout(() => btn.textContent = orig, 2000);
+        }
+        return;
+      } catch(e) {
+        // clipboard failed, fall through to download
+      }
+    }
+    // Default download
+    const link = document.createElement('a');
+    link.download = `unbroken-${currentYear()}.png`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+  }, 'image/png');
 }
 
 // ── UTILS ──
