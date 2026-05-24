@@ -282,7 +282,6 @@ function checkInToday(hi) {
 function updateCell(date, hi) {
   const habit = habits[hi];
   const checked = new Set(habit.checked || []);
-  // find by data-date within the specific habit card
   const card = document.getElementById(`hcard-${hi}`);
   if (!card) return;
   const cell = card.querySelector(`.cell[data-date="${date}"]`);
@@ -294,6 +293,8 @@ function updateCell(date, hi) {
     cell.classList.remove('filled');
     cell.style.background = '';
   }
+  // always sync the log today button after any cell change
+  if (date === todayStr()) updateCheckinBtn(hi);
 }
 
 function updateStats(hi) {
@@ -314,10 +315,18 @@ function updateCheckinBtn(hi) {
   const btn = card.querySelector('.btn-checkin');
   if (!btn) return;
   const habit = habits[hi];
-  btn.textContent = '✓ LOGGED TODAY';
-  btn.className = 'btn-checkin done';
-  btn.style.background = '';
-  btn.style.color = '';
+  const isChecked = (habit.checked || []).includes(todayStr());
+  if (isChecked) {
+    btn.textContent = '✓ LOGGED TODAY';
+    btn.className = 'btn-checkin done';
+    btn.style.background = '';
+    btn.style.color = '';
+  } else {
+    btn.textContent = '+ LOG TODAY';
+    btn.className = 'btn-checkin';
+    btn.style.background = habit.color;
+    btn.style.color = '#0e0e0e';
+  }
 }
 
 function deleteHabit(hi) {
@@ -341,14 +350,17 @@ function deleteHabit(hi) {
 }
 
 // ── TOOLTIP ──
-function showTooltip(e, date, filled, inYear) {
+function showTooltip(e, date, hi, inYear) {
   if (!inYear) return;
   const tt = document.getElementById('tooltip');
   const [y, m, d] = date.split('-');
+  const habit = habits[hi];
+  const checked = new Set(habit ? habit.checked || [] : []);
+  const filled = checked.has(date);
   tt.textContent = `${MONTHS[parseInt(m) - 1]} ${parseInt(d)}, ${y} · ${filled ? '✓ logged' : 'not logged'}`;
   tt.style.display = 'block';
   tt.style.left = e.clientX + 'px';
-  tt.style.top  = e.clientY + 'px';
+  tt.style.top = e.clientY + 'px';
 }
 
 function hideTooltip() {
