@@ -130,7 +130,7 @@ function calcStats(habit) {
   return { total, streak, longest, rate };
 }
 
-// ── RENDER ──
+// ── RENDER ── //
 function render() {
   const empty = document.getElementById('empty-state');
   const container = document.getElementById('habits-container');
@@ -149,7 +149,8 @@ function render() {
 
   empty.style.display = 'none';
   exportBar.style.display = 'flex';
-  addBtn.style.display = habits.length < 5 ? 'block' : 'none';
+  addBtn.style.display = habits.length < 5 && !deleteMode ? 'block' : 'none';
+  document.getElementById('btn-delete-header').style.display = habits.length > 0 && !deleteMode ? 'block' : 'none';
 
   const weeks = buildYearGrid();
   const monthLabels = getMonthLabels(weeks);
@@ -226,7 +227,7 @@ function render() {
             </div>
           </div>
           <div class="habit-actions">
-            <button class="btn-icon danger" onclick="deleteHabit(${hi})">DELETE</button>
+            ${deleteMode ? `<input type="checkbox" class="delete-checkbox" data-hi="${hi}">` : ''}
           </div>
         </div>
 
@@ -329,40 +330,45 @@ function updateCheckinBtn(hi) {
   }
 }
 
-function deleteHabit(hi) {
-  const confirmed = window._deleteConfirm === hi;
-  if (!confirmed) {
-    window._deleteConfirm = hi;
-    const btn = document.querySelector(`#hcard-${hi} .btn-icon.danger`);
-    if (btn) {
-      btn.textContent = 'CONFIRM?';
-      btn.style.borderColor = '#ff4444';
-      btn.style.color = '#ff4444';
-    }
-    // reuse the existing tooltip
-    const tt = document.getElementById('tooltip');
-    tt.textContent = 'click again to delete';
-    tt.style.display = 'block';
-    const rect = btn.getBoundingClientRect();
-    tt.style.left = rect.left + rect.width / 2 + 'px';
-    tt.style.top = (rect.top - 10) + 'px';
+// ── DELETE MODE ──
+let deleteMode = false;
 
-    setTimeout(() => {
-      window._deleteConfirm = null;
-      tt.style.display = 'none';
-      if (btn) {
-        btn.textContent = 'DELETE';
-        btn.style.borderColor = '';
-        btn.style.color = '';
-      }
-    }, 2500);
-    return;
-  }
-  window._deleteConfirm = null;
-  document.getElementById('tooltip').style.display = 'none';
-  habits.splice(hi, 1);
-  saveData();
+function enterDeleteMode() {
+  deleteMode = true;
   render();
+  // swap header buttons
+  document.getElementById('btn-add-header').style.display = 'none';
+  document.getElementById('btn-delete-header').style.display = 'none';
+
+  // inject delete bar
+  const bar = document.createElement('div');
+  bar.id = 'delete-bar';
+  bar.innerHTML = `
+    <span class="delete-bar-label">// SELECT HABITS TO DELETE</span>
+    <div class="delete-bar-actions">
+      <button class="btn-delete-cancel" onclick="exitDeleteMode()">CANCEL</button>
+      <button class="btn-delete-confirm" onclick="confirmDelete()">DELETE SELECTED</button>
+    </div>
+  `;
+  document.body.appendChild(bar);
+}
+
+function exitDeleteMode() {
+  deleteMode = false;
+  const bar = document.getElementById('delete-bar');
+  if (bar) bar.remove();
+  render();
+}
+
+function confirmDelete() {
+  const checkboxes = document.querySelectorAll('.delete-checkbox:checked');
+  if (checkboxes.length === 0) { exitDeleteMode(); return; }
+  const indicesToDelete = Array.from(checkboxes)
+    .map(cb => parseInt(cb.dataset.hi))
+    .sort((a, b) => b - a); // delete from end to preserve indices
+  indicesToDelete.forEach(i => habits.splice(i, 1));
+  saveData();
+  exitDeleteMode();
 }
 
 // ── TOOLTIP ──

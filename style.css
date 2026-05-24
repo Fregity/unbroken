@@ -584,3 +584,95 @@ main {
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ── DELETE MODE ── */
+.delete-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg);
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.delete-checkbox:checked {
+  background: #ff4444;
+  border-color: #ff4444;
+}
+
+.delete-checkbox:checked::after {
+  content: '✓';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 11px;
+  height: 100%;
+}
+
+#delete-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1a0a0a;
+  border-top: 1px solid #ff4444;
+  padding: 16px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 100;
+  flex-wrap: wrap;
+}
+
+.delete-bar-label {
+  font-size: 11px;
+  color: #ff4444;
+  letter-spacing: 0.1em;
+}
+
+.delete-bar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-delete-confirm {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 10px 22px;
+  background: #ff4444;
+  color: #0e0e0e;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+
+.btn-delete-confirm:hover { opacity: 0.85; }
+
+.btn-delete-cancel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 10px 22px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-delete-cancel:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  #delete-bar { padding-left: 20px; padding-right: 20px; }
+}
