@@ -676,3 +676,118 @@ main {
 @media (max-width: 600px) {
   #delete-bar { padding-left: 20px; padding-right: 20px; }
 }
+
+/* ── HEADER LAYOUT UPDATE ── */
+header {
+  align-items: center;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* ── STREAK CHIPS ── */
+.streak-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.streak-chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: border-color 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.streak-chip .chain-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.streak-chip .chip-num {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.streak-chip .chip-name {
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* snap-in animation */
+@keyframes chainSnap {
+  0%   { transform: scale(1) rotate(0deg); }
+  30%  { transform: scale(1.35) rotate(-8deg); }
+  55%  { transform: scale(0.92) rotate(4deg); }
+  75%  { transform: scale(1.1) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes numTick {
+  0%   { transform: translateY(0); opacity: 1; }
+  40%  { transform: translateY(-8px); opacity: 0; }
+  41%  { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes chipGlow {
+  0%   { box-shadow: none; }
+  40%  { box-shadow: 0 0 0 2px var(--chip-color, #3fb950), 0 0 12px var(--chip-color, #3fb950); }
+  100% { box-shadow: none; }
+}
+
+.streak-chip.animate-snap .chain-icon {
+  animation: chainSnap 0.45s cubic-bezier(0.36,0.07,0.19,0.97) forwards;
+}
+
+.streak-chip.animate-snap .chip-num {
+  animation: numTick 0.35s ease forwards;
+}
+
+.streak-chip.animate-snap {
+  animation: chipGlow 0.6s ease forwards;
+}
+
+/* milestone chip — brighter border */
+.streak-chip.milestone {
+  border-color: var(--chip-color, #3fb950);
+}
+
+/* ── FOOTER OVERLAP FIX ── */
+.main-pad {
+  padding-bottom: 100px;
+}
+
+@media (max-width: 600px) {
+  .header-left { gap: 12px; }
+  .streak-chip .chip-name { display: none; }
+  .streak-chip { padding: 5px 10px; }
+  .main-pad { padding-bottom: 120px; }
+}

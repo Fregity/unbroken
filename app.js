@@ -129,6 +129,114 @@ function calcStats(habit) {
 
   return { total, streak, longest, rate };
 }
+// ── CHAIN SVG ──
+function chainSVG(color) {
+  return `<svg class="chain-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
+      stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+      stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+// ── SOUND ENGINE ──
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playChainSound(milestone = false) {
+  try {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+
+    // Metallic click base
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(milestone ? 880 : 660, now);
+    osc1.frequency.exponentialRampToValueAtTime(milestone ? 440 : 220, now + 0.15);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(milestone ? 1320 : 990, now);
+    osc2.frequency.exponentialRampToValueAtTime(milestone ? 660 : 440, now + 0.12);
+
+    filter.type = 'bandpass';
+    filter.frequency.value = milestone ? 1200 : 800;
+    filter.Q.value = 2;
+
+    gainNode.gain.setValueAtTime(0, now);
+    gainNode.gain.linearRampToValueAtTime(milestone ? 0.18 : 0.12, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + (milestone ? 0.4 : 0.25));
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.4);
+    osc2.stop(now + 0.4);
+  } catch(e) {
+    // audio not supported, silently skip
+  }
+}
+
+// ── STREAK CHIPS ──
+const MILESTONES = [7, 14, 30, 50, 100, 200, 365];
+
+function isMilestone(n) {
+  return MILESTONES.includes(n);
+}
+
+function renderStreakChips() {
+  const container = document.getElementById('streak-chips');
+  if (!container) return;
+  if (habits.length === 0) { container.innerHTML = ''; return; }
+
+  container.innerHTML = habits.map((habit, hi) => {
+    const stats = calcStats(habit);
+    const milestone = isMilestone(stats.streak);
+    return `
+      <div class="streak-chip ${milestone ? 'milestone' : ''}"
+           id="chip-${hi}"
+           style="--chip-color:${habit.color}; color:${habit.color}; border-color:${milestone ? habit.color : ''}">
+        ${chainSVG(habit.color)}
+        <span class="chip-num" id="chip-num-${hi}">${stats.streak}</span>
+        <span class="chip-name">${escHtml(habit.name)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function animateChip(hi, newStreak) {
+  const chip = document.getElementById(`chip-${hi}`);
+  const num  = document.getElementById(`chip-num-${hi}`);
+  if (!chip || !num) return;
+
+  const milestone = isMilestone(newStreak);
+  playChainSound(milestone);
+
+  // update number mid-animation
+  setTimeout(() => { num.textContent = newStreak; }, 175);
+
+  chip.classList.remove('animate-snap');
+  void chip.offsetWidth; // force reflow to restart animation
+  chip.classList.add('animate-snap');
+  setTimeout(() => chip.classList.remove('animate-snap'), 650);
+
+  // milestone — upgrade border
+  if (milestone) {
+    chip.classList.add('milestone');
+    chip.style.borderColor = habits[hi].color;
+  }
+}
 
 // ── RENDER ── //
 function render() {
@@ -138,6 +246,7 @@ function render() {
   const addBtn = document.getElementById('btn-add-header');
 
   document.getElementById('year-label').textContent = `// ${currentYear()}`;
+  renderStreakChips();
 
   if (habits.length === 0) {
     empty.style.display = 'block';
@@ -260,11 +369,22 @@ function toggleDay(date, hi, blocked) {
   const habit = habits[hi];
   if (!habit.checked) habit.checked = [];
   const idx = habit.checked.indexOf(date);
-  if (idx === -1) habit.checked.push(date);
-  else habit.checked.splice(idx, 1);
-  saveData();
-  updateCell(date, hi);
-  updateStats(hi);
+  if (idx === -1) {
+    habit.checked.push(date);
+    saveData();
+    updateCell(date, hi);
+    updateStats(hi);
+    // trigger sound + animation if checking IN today
+    if (date === todayStr()) {
+      const stats = calcStats(habit);
+      animateChip(hi, stats.streak);
+    }
+  } else {
+    habit.checked.splice(idx, 1);
+    saveData();
+    updateCell(date, hi);
+    updateStats(hi);
+  }
 }
 
 function checkInToday(hi) {
@@ -277,6 +397,8 @@ function checkInToday(hi) {
     updateCell(today, hi);
     updateStats(hi);
     updateCheckinBtn(hi);
+    const stats = calcStats(habit);
+    animateChip(hi, stats.streak);
   }
 }
 
@@ -294,8 +416,18 @@ function updateCell(date, hi) {
     cell.classList.remove('filled');
     cell.style.background = '';
   }
-  // always sync the log today button after any cell change
+  // always sync checkin button and chip after any cell change
   if (date === todayStr()) updateCheckinBtn(hi);
+
+  const stats = calcStats(habit);
+  const num = document.getElementById(`chip-num-${hi}`);
+  if (num) num.textContent = stats.streak;
+  const chip = document.getElementById(`chip-${hi}`);
+  if (chip) {
+    const milestone = isMilestone(stats.streak);
+    chip.classList.toggle('milestone', milestone);
+    chip.style.borderColor = milestone ? habit.color : '';
+  }
 }
 
 function updateStats(hi) {
@@ -358,6 +490,7 @@ function exitDeleteMode() {
   const bar = document.getElementById('delete-bar');
   if (bar) bar.remove();
   render();
+  renderStreakChips();
 }
 
 function confirmDelete() {
