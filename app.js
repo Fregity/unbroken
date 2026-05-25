@@ -709,6 +709,27 @@ function escHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', (e) => {
+  const typing = document.activeElement.tagName === 'INPUT';
+
+  // N — open add habit modal
+  if ((e.key === 'n' || e.key === 'N') && !typing && !deleteMode) {
+    openModal();
+  }
+
+  // D or Backspace — enter delete mode
+  if ((e.key === 'd' || e.key === 'D' || e.key === 'Backspace') && !typing && !deleteMode && habits.length > 0) {
+    enterDeleteMode();
+  }
+
+  // Escape — close modal or exit delete mode
+  if (e.key === 'Escape') {
+    if (document.getElementById('modal').style.display !== 'none') closeModal();
+    else if (deleteMode) exitDeleteMode();
+  }
+});
+
 // ── INIT ──
 loadData();
 render();
