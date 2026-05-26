@@ -494,17 +494,17 @@ main {
 
 .color-picker-wrap {
   position: relative;
-  padding: 4px 2px;
+  padding: 6px 0;
 }
 
 .color-picker-fade-right,
 .color-picker-fade-left {
   position: absolute;
   top: 0;
-  width: 32px;
+  width: 28px;
   height: 100%;
   pointer-events: none;
-  z-index: 2;
+  z-index: 0;
   transition: opacity 0.2s ease;
 }
 
@@ -522,12 +522,12 @@ main {
 .color-picker {
   display: flex;
   flex-direction: row;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 4px 2px;
+  padding: 6px 6px 6px 6px;
 }
 
 .color-picker::-webkit-scrollbar {
@@ -535,8 +535,8 @@ main {
 }
 
 .color-opt {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
@@ -551,8 +551,9 @@ main {
 .color-opt.selected {
   outline: 2px solid #ffffff;
   outline-offset: 2px;
-  z-index: 4;
+  z-index: 1;
 }
+
 .modal-actions {
   display: flex;
   gap: 10px;
