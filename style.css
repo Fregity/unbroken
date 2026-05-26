@@ -288,18 +288,18 @@ main {
 
 .grid-cols {
   display: flex;
-  gap: 3px;
+  gap: clamp(3px, 0.25vw, 5px);
 }
 
 .grid-col {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: clamp(3px, 0.25vw, 5px);
 }
 
 .cell {
-  width: 13px;
-  height: 13px;
+  width: clamp(13px, 1.1vw, 18px);
+  height: clamp(13px, 1.1vw, 18px);
   border-radius: 2px;
   background: var(--empty);
   cursor: pointer;
