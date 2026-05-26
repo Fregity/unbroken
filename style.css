@@ -495,8 +495,16 @@ main {
 .color-picker {
   display: flex;
   flex-direction: row;
-  gap: 5px;
+  gap: 8px;
   flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 4px;
+}
+
+.color-picker::-webkit-scrollbar {
+  display: none;
 }
 
 .color-opt {

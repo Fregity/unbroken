@@ -348,7 +348,10 @@ function render() {
             </div>
           </div>
           <div class="habit-actions">
-            ${deleteMode ? `<input type="checkbox" class="delete-checkbox" data-hi="${hi}">` : ''}
+            ${deleteMode
+              ? `<input type="checkbox" class="delete-checkbox" data-hi="${hi}">`
+              : `<button class="btn-icon" onclick="openEditModal(${hi})">EDIT</button>`
+            }
           </div>
         </div>
 
@@ -548,6 +551,9 @@ function openModal() {
 
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
+  document.getElementById('modal-title').textContent = 'New Habit';
+  document.getElementById('modal-save-btn').textContent = 'CREATE →';
+  document.getElementById('modal-save-btn').onclick = saveHabit;
 }
 
 function closeModalOutside(e) {
@@ -565,6 +571,40 @@ function rgbToHex(rgb) {
   const m = rgb.match(/\d+/g);
   if (!m) return rgb;
   return '#' + m.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+}
+
+function openEditModal(hi) {
+  const habit = habits[hi];
+  selectedColor = habit.color;
+
+  document.getElementById('color-picker').innerHTML = COLORS.map(c => `
+    <div class="color-opt ${c === selectedColor ? 'selected' : ''}"
+      style="background:${c}"
+      data-color="${c}"
+      onclick="selectColor('${c}')"
+    ></div>
+  `).join('');
+
+  document.getElementById('habit-name-input').value = habit.name;
+  document.getElementById('modal-title').textContent = 'Edit Habit';
+  document.getElementById('modal-save-btn').textContent = 'SAVE →';
+  document.getElementById('modal-save-btn').onclick = () => saveEdit(hi);
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('habit-name-input').focus(), 100);
+}
+
+function saveEdit(hi) {
+  const name = document.getElementById('habit-name-input').value.trim();
+  if (!name) { document.getElementById('habit-name-input').focus(); return; }
+  habits[hi].name = name;
+  habits[hi].color = selectedColor;
+  saveData();
+  closeModal();
+  // reset modal back to create mode for next time
+  document.getElementById('modal-title').textContent = 'New Habit';
+  document.getElementById('modal-save-btn').textContent = 'CREATE →';
+  document.getElementById('modal-save-btn').onclick = saveHabit;
+  render();
 }
 
 function saveHabit() {
@@ -733,6 +773,11 @@ document.addEventListener('keydown', (e) => {
   // D or Backspace — enter delete mode
   if ((e.key === 'd' || e.key === 'D' || e.key === 'Backspace') && !typing && !deleteMode && habits.length > 0) {
     enterDeleteMode();
+  }
+
+  // E — edit first habit (or only habit)
+  if ((e.key === 'e' || e.key === 'E') && !typing && !deleteMode && habits.length > 0) {
+    openEditModal(0);
   }
 
   // Escape — close modal or exit delete mode

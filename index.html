@@ -102,7 +102,7 @@
   <!-- ── ADD HABIT MODAL ── -->
   <div class="modal-overlay" id="modal" style="display:none" onclick="closeModalOutside(event)">
     <div class="modal">
-      <div class="modal-title">New Habit</div>
+      <div class="modal-title" id="modal-title">New Habit</div>
       <div class="field">
         <label>Habit Name</label>
         <input
@@ -119,7 +119,7 @@
       </div>
       <div class="modal-actions">
         <button class="btn-modal cancel" onclick="closeModal()">CANCEL</button>
-        <button class="btn-modal primary" onclick="saveHabit()">CREATE →</button>
+        <button class="btn-modal primary" id="modal-save-btn" onclick="saveHabit()">CREATE →</button>
       </div>
     </div>
   </div>
