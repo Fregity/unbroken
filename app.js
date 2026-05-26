@@ -1,7 +1,15 @@
 // ── CONSTANTS ──
 const COLORS = [
-  '#3fb950','#58a6ff','#f78166','#d2a8ff','#ffa657',
-  '#79c0ff','#ff7b72','#a5d6ff','#7ee787','#e3b341'
+  '#ff3c6e', // red
+  '#f78166', // coral
+  '#ffa657', // orange
+  '#ffd166', // yellow
+  '#3fb950', // green
+  '#7ee787', // mint/light green
+  '#79c0ff', // light blue
+  '#58a6ff', // blue
+  '#7c6fff', // purple
+  '#3C4142',  // charcoal
 ];
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -254,6 +262,10 @@ function render() {
     exportBar.style.display = 'none';
     addBtn.style.display = 'none';
     return;
+  }
+
+  if (window.innerWidth <= 768) {
+    setTimeout(scrollToToday, 50);
   }
 
   empty.style.display = 'none';
@@ -522,11 +534,11 @@ function hideTooltip() {
 // ── MODAL ──
 function openModal() {
   if (habits.length >= 5) return;
-  const usedColors = habits.map(h => h.color);
   document.getElementById('color-picker').innerHTML = COLORS.map(c => `
     <div class="color-opt ${c === selectedColor ? 'selected' : ''}"
-      style="background:${c};${usedColors.includes(c) ? 'opacity:0.3;cursor:not-allowed' : ''}"
-      onclick="${usedColors.includes(c) ? '' : `selectColor('${c}')`}"
+      style="background:${c}"
+      data-color="${c}"
+      onclick="selectColor('${c}')"
     ></div>
   `).join('');
   document.getElementById('habit-name-input').value = '';
@@ -545,7 +557,7 @@ function closeModalOutside(e) {
 function selectColor(c) {
   selectedColor = c;
   document.querySelectorAll('.color-opt').forEach(el => {
-    el.classList.toggle('selected', rgbToHex(el.style.background) === c);
+    el.classList.toggle('selected', el.dataset.color === c);
   });
 }
 
@@ -729,6 +741,20 @@ document.addEventListener('keydown', (e) => {
     else if (deleteMode) exitDeleteMode();
   }
 });
+
+function scrollToToday() {
+  const today = todayStr();
+  const cells = document.querySelectorAll(`.cell[data-date="${today}"]`);
+  if (!cells.length) return;
+  // scroll the first today cell into view within its grid-wrap
+  const cell = cells[0];
+  const wrap = cell.closest('.grid-wrap');
+  if (!wrap) return;
+  const cellRect = cell.getBoundingClientRect();
+  const wrapRect = wrap.getBoundingClientRect();
+  const scrollOffset = cellRect.left - wrapRect.left - (wrap.clientWidth / 2) + (cellRect.width / 2);
+  wrap.scrollLeft += scrollOffset;
+}
 
 // ── INIT ──
 loadData();
