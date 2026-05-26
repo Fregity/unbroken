@@ -1,0 +1,6 @@
+ive got a better idea, just move the edit up with the delete and add habit buttons, then you can choose which one to edit, then you can change name and color, but once you press edit, but before you select which one you want to edit, you see arrows and you can move them up or down, and for clarification i did not update my document with any changes which you made last responce, when you were adding the share thing and the arrows thing
+
+What is "best" and why is it always just set to 1 or 0, it doesn't make any sense, even if the best streak was more than 1
+
+What else could be added to make this project awesome, right now its great but it could be perfect, what would someone suggest or ask if they use this
+
