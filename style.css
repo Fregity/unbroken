@@ -527,7 +527,7 @@ main {
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding: 6px 6px 6px 6px;
+  padding: 8px 6px 8px 6px;
 }
 
 .color-picker::-webkit-scrollbar {
@@ -609,6 +609,12 @@ main {
 @media (max-width: 600px) {
   header, main, #export-bar { padding-left: 20px; padding-right: 20px; }
   .habit-stats { gap: 14px; }
+  .color-picker-fade-right,
+  .color-picker-fade-left {
+    display: block;
+    position: absolute;
+    z-index: 2;
+  }
 }
 
 /* ── MOBILE TOUCH TARGETS ── */
