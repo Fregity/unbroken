@@ -494,35 +494,30 @@ main {
 
 .color-picker-wrap {
   position: relative;
+  padding: 4px 2px;
 }
 
-.color-picker-wrap::before,
-.color-picker-wrap::after {
-  content: '';
+.color-picker-fade-right,
+.color-picker-fade-left {
   position: absolute;
   top: 0;
-  width: 40px;
-  height: calc(100% - 4px);
+  width: 32px;
+  height: 100%;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   transition: opacity 0.2s ease;
 }
 
-.color-picker-wrap::before {
+.color-picker-fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--surface), transparent);
+}
+
+.color-picker-fade-left {
   left: 0;
   background: linear-gradient(to right, var(--surface), transparent);
   opacity: 0;
 }
-
-.color-picker-wrap::after {
-  right: 0;
-  background: linear-gradient(to left, var(--surface), transparent);
-  opacity: 1;
-}
-
-.color-picker-wrap.show-left::before  { opacity: 1; }
-.color-picker-wrap.show-right::after  { opacity: 1; }
-.color-picker-wrap.hide-right::after  { opacity: 0; }
 
 .color-picker {
   display: flex;
@@ -532,7 +527,7 @@ main {
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  padding-bottom: 4px;
+  padding: 4px 2px;
 }
 
 .color-picker::-webkit-scrollbar {
@@ -545,10 +540,10 @@ main {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 0.15s, transform 0.1s;
+  transition: transform 0.1s;
   flex-shrink: 0;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 .color-opt:hover { transform: scale(1.15); }
@@ -556,9 +551,8 @@ main {
 .color-opt.selected {
   outline: 2px solid #ffffff;
   outline-offset: 2px;
-  z-index: 3;
+  z-index: 4;
 }
-
 .modal-actions {
   display: flex;
   gap: 10px;

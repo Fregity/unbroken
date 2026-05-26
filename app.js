@@ -562,18 +562,20 @@ function closeModalOutside(e) {
 }
 
 function initColorPickerScroll() {
-  const picker = document.getElementById('color-picker');
-  const wrap = picker?.parentElement;
-  if (!picker || !wrap) return;
+  const picker    = document.getElementById('color-picker');
+  const fadeLeft  = document.getElementById('fade-left');
+  const fadeRight = document.getElementById('fade-right');
+  if (!picker || !fadeLeft || !fadeRight) return;
 
   function updateFade() {
     const atStart = picker.scrollLeft <= 2;
-    const atEnd = picker.scrollLeft >= picker.scrollWidth - picker.clientWidth - 2;
-    wrap.classList.toggle('show-left',  !atStart);
-    wrap.classList.toggle('hide-right', atEnd);
-    wrap.classList.toggle('show-right', !atEnd);
+    const atEnd   = picker.scrollLeft >= picker.scrollWidth - picker.clientWidth - 2;
+    fadeLeft.style.opacity  = atStart ? '0' : '1';
+    fadeRight.style.opacity = atEnd   ? '0' : '1';
   }
 
+  picker.removeEventListener('scroll', picker._fadeHandler);
+  picker._fadeHandler = updateFade;
   picker.addEventListener('scroll', updateFade);
   updateFade();
 }
