@@ -810,16 +810,14 @@ document.addEventListener('keydown', (e) => {
 
 function scrollToToday() {
   const today = todayStr();
-  const cells = document.querySelectorAll(`.cell[data-date="${today}"]`);
-  if (!cells.length) return;
-  // scroll the first today cell into view within its grid-wrap
-  const cell = cells[0];
-  const wrap = cell.closest('.grid-wrap');
-  if (!wrap) return;
-  const cellRect = cell.getBoundingClientRect();
-  const wrapRect = wrap.getBoundingClientRect();
-  const scrollOffset = cellRect.left - wrapRect.left - (wrap.clientWidth / 2) + (cellRect.width / 2);
-  wrap.scrollLeft += scrollOffset;
+  document.querySelectorAll('.grid-wrap').forEach(wrap => {
+    const cell = wrap.querySelector(`.cell[data-date="${today}"]`);
+    if (!cell) return;
+    const cellRect = cell.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const scrollOffset = cellRect.left - wrapRect.left - (wrap.clientWidth / 2) + (cellRect.width / 2);
+    wrap.scrollLeft += scrollOffset;
+  });
 }
 
 // ── INIT ──
