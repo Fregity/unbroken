@@ -546,6 +546,7 @@ function openModal() {
   `).join('');
   document.getElementById('habit-name-input').value = '';
   document.getElementById('modal').style.display = 'flex';
+  initColorPickerScroll();
   setTimeout(() => document.getElementById('habit-name-input').focus(), 100);
 }
 
@@ -558,6 +559,23 @@ function closeModal() {
 
 function closeModalOutside(e) {
   if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function initColorPickerScroll() {
+  const picker = document.getElementById('color-picker');
+  const wrap = picker?.parentElement;
+  if (!picker || !wrap) return;
+
+  function updateFade() {
+    const atStart = picker.scrollLeft <= 2;
+    const atEnd = picker.scrollLeft >= picker.scrollWidth - picker.clientWidth - 2;
+    wrap.classList.toggle('show-left',  !atStart);
+    wrap.classList.toggle('hide-right', atEnd);
+    wrap.classList.toggle('show-right', !atEnd);
+  }
+
+  picker.addEventListener('scroll', updateFade);
+  updateFade();
 }
 
 function selectColor(c) {
@@ -590,6 +608,7 @@ function openEditModal(hi) {
   document.getElementById('modal-save-btn').textContent = 'SAVE →';
   document.getElementById('modal-save-btn').onclick = () => saveEdit(hi);
   document.getElementById('modal').style.display = 'flex';
+  initColorPickerScroll();
   setTimeout(() => document.getElementById('habit-name-input').focus(), 100);
 }
 

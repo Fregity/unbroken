@@ -496,17 +496,33 @@ main {
   position: relative;
 }
 
+.color-picker-wrap::before,
 .color-picker-wrap::after {
   content: '';
   position: absolute;
   top: 0;
-  right: 0;
   width: 40px;
-  height: 100%;
-  background: linear-gradient(to right, transparent, var(--surface));
+  height: calc(100% - 4px);
   pointer-events: none;
-  border-radius: 0 2px 2px 0;
+  z-index: 1;
+  transition: opacity 0.2s ease;
 }
+
+.color-picker-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--surface), transparent);
+  opacity: 0;
+}
+
+.color-picker-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--surface), transparent);
+  opacity: 1;
+}
+
+.color-picker-wrap.show-left::before  { opacity: 1; }
+.color-picker-wrap.show-right::after  { opacity: 1; }
+.color-picker-wrap.hide-right::after  { opacity: 0; }
 
 .color-picker {
   display: flex;
@@ -531,13 +547,18 @@ main {
   border: 2px solid transparent;
   transition: border-color 0.15s, transform 0.1s;
   flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .color-opt:hover { transform: scale(1.15); }
+
 .color-opt.selected {
   outline: 2px solid #ffffff;
   outline-offset: 2px;
+  z-index: 3;
 }
+
 .modal-actions {
   display: flex;
   gap: 10px;
