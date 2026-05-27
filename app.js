@@ -232,6 +232,7 @@ function renderStreakChips() {
 }
 
 function animateChip(hi, newStreak) {
+  if (navigator.vibrate) navigator.vibrate(isMilestone(newStreak) ? [40,30,40] : 40);
   const chip = document.getElementById(`chip-${hi}`);
   const num  = document.getElementById(`chip-num-${hi}`);
   if (!chip || !num) return;
