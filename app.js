@@ -264,6 +264,7 @@ function render() {
 
   document.getElementById('year-label').textContent = `// ${currentYear()}`;
   renderStreakChips();
+  checkStreakRisk();
 
   if (habits.length === 0) {
     empty.style.display = 'block';
@@ -331,7 +332,7 @@ function render() {
     const checkinBtn = isCheckedToday
       ? `class="btn-checkin logged" data-unlog="− UNLOG TODAY" style="--habit-color:${habit.color}"`
       : `class="btn-checkin unlogged" data-log="✓ LOG TODAY" style="background:${habit.color};color:#0e0e0e;--habit-color:${habit.color}"`;
-
+    
     return `
       <div class="habit-card" id="hcard-${hi}">
         <div class="habit-header">
@@ -501,6 +502,7 @@ function updateCheckinBtn(hi) {
     btn.setAttribute('data-log', '✓ LOG TODAY');
     btn.removeAttribute('data-unlog');
   }
+  checkStreakRisk();
 }
 
 // ── DELETE MODE ──
@@ -984,6 +986,24 @@ function scrollToToday() {
     const wrapRect = wrap.getBoundingClientRect();
     const scrollOffset = cellRect.left - wrapRect.left - (wrap.clientWidth / 2) + (cellRect.width / 2);
     wrap.scrollLeft += scrollOffset;
+  });
+}
+
+function checkStreakRisk() {
+  const today = todayStr();
+  const hour  = new Date().getHours();
+  habits.forEach((habit, hi) => {
+    const stats   = calcStats(habit);
+    const checked = new Set(habit.checked || []);
+    const chip    = document.getElementById(`chip-${hi}`);
+    if (!chip) return;
+    if (stats.streak > 0 && !checked.has(today) && hour >= 17) {
+      chip.style.borderColor = '#ff4444';
+      chip.title = `Your ${habit.name} streak is at risk, log today before midnight`;
+    } else {
+      chip.style.borderColor = stats.streak > 0 && habits[hi].color ? '' : '';
+      chip.title = '';
+    }
   });
 }
 
