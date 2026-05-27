@@ -366,6 +366,8 @@ main {
   letter-spacing: 0.1em;
 }
 
+
+
 /* ── DIVIDER ── */
 .habit-divider {
   height: 1px;
@@ -911,4 +913,192 @@ header {
   .how-it-works { gap: 24px; }
   .how-arrow { display: none; }
   .how-step { width: 140px; }
+}
+
+/* ── EDIT MODE ── */
+.reorder-arrows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.btn-arrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.btn-arrow:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.btn-arrow:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+.edit-mode-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* ── CARD PICKER SHEET ── */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease forwards;
+}
+
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  width: 100%;
+  max-width: 560px;
+  padding: 28px 28px 40px;
+  animation: sheetUp 0.3s cubic-bezier(0.32,0.72,0,1) forwards;
+}
+
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.sheet-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.sheet-habits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.sheet-habit {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.15s;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sheet-habit:hover { border-color: var(--text); }
+
+.sheet-habit-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sheet-habit-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.sheet-habit-streak {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sheet-cancel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 12px;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sheet-cancel:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.btn-checkin.logged {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.btn-checkin.logged:hover {
+  background: rgba(255,0,0,0.08);
+  border-color: #ff4444;
+  color: #ff4444;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-checkin.logged:hover::after {
+  content: attr(data-unlog);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14,14,14,0.92);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.btn-checkin.logged {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-checkin.unlogged {
+  position: relative;
+  overflow: hidden;
+  outline: 1px solid var(--habit-color);
+}
+
+.btn-checkin.unlogged:hover {
+  outline-offset: 0px;
+}
+
+.btn-checkin.unlogged:hover::after {
+  content: attr(data-log);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14,14,14,0.92);
+  color: #e8e8e8;
+  font-size: 11px;
+  letter-spacing: 0.08em;
 }

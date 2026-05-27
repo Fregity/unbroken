@@ -90,53 +90,61 @@ function getMonthLabels(weeks) {
   return labels;
 }
 
-// ── STATS ──
 function calcStats(habit) {
-  const today = todayStr();
-  const year = currentYear();
+  const today   = todayStr();
+  const year    = currentYear();
   const yearStr = String(year);
 
-  const jan1 = new Date(year, 0, 1);
-  const now = new Date();
+  const jan1      = new Date(year, 0, 1);
+  const now       = new Date();
   const dayOfYear = Math.floor((now - jan1) / 86400000) + 1;
 
-  const checked = (habit.checked || []).filter(d => d.startsWith(yearStr));
-  const total = checked.length;
-  const rate = dayOfYear > 0 ? Math.round((total / dayOfYear) * 100) : 0;
+  // Year-scoped for total + rate
+  const checkedThisYear = (habit.checked || []).filter(d => d.startsWith(yearStr));
+  const total = checkedThisYear.length;
+  const rate  = dayOfYear > 0 ? Math.round((total / dayOfYear) * 100) : 0;
+
+  // All checked days for streak calculations
+  const allChecked = [...(habit.checked || [])].sort();
 
   // Current streak — walk backwards from today
   let streak = 0;
   const cursor = new Date();
   while (true) {
     const ds = fmtDate(cursor);
-    if (checked.includes(ds)) {
+    if (allChecked.includes(ds)) {
       streak++;
       cursor.setDate(cursor.getDate() - 1);
     } else if (ds === today) {
-      // Today not checked yet — skip it and keep looking back
       cursor.setDate(cursor.getDate() - 1);
     } else {
       break;
     }
-    if (streak > 365) break;
+    if (streak > 3650) break;
   }
 
-  // Longest streak
+  // Longest streak — across all time
+  // Use pure string date math to avoid timezone issues
   let longest = 0, cur = 0;
-  const sorted = [...checked].sort();
-  sorted.forEach((ds, i) => {
+  allChecked.forEach((ds, i) => {
     if (i === 0) {
       cur = 1;
     } else {
-      const prev = new Date(sorted[i - 1]);
+      // check if previous date + 1 day === current date
+      const [y, m, d] = allChecked[i-1].split('-').map(Number);
+      const prev = new Date(y, m-1, d);
       prev.setDate(prev.getDate() + 1);
-      cur = fmtDate(prev) === ds ? cur + 1 : 1;
+      const expectedNext = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+      cur = expectedNext === ds ? cur + 1 : 1;
     }
     if (cur > longest) longest = cur;
   });
 
+  longest = Math.max(longest, streak);
+
   return { total, streak, longest, rate };
 }
+
 // ── CHAIN SVG ──
 function chainSVG(color) {
   return `<svg class="chain-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -270,8 +278,9 @@ function render() {
 
   empty.style.display = 'none';
   exportBar.style.display = 'flex';
-  addBtn.style.display = habits.length < 5 && !deleteMode ? 'block' : 'none';
-  document.getElementById('btn-delete-header').style.display = habits.length > 0 && !deleteMode ? 'block' : 'none';
+  addBtn.style.display = habits.length < 5 && !deleteMode && !editMode ? 'block' : 'none';
+  document.getElementById('btn-delete-header').style.display = habits.length > 0 && !deleteMode && !editMode ? 'block' : 'none';
+  document.getElementById('btn-edit-header').style.display = habits.length > 0 && !deleteMode && !editMode ? 'block' : 'none';
 
   const weeks = buildYearGrid();
   const monthLabels = getMonthLabels(weeks);
@@ -319,8 +328,8 @@ function render() {
 
     const isCheckedToday = checked.has(today);
     const checkinBtn = isCheckedToday
-      ? `class="btn-checkin done"`
-      : `class="btn-checkin" style="background:${habit.color};color:#0e0e0e"`;
+      ? `class="btn-checkin logged" data-unlog="− UNLOG TODAY" style="--habit-color:${habit.color}"`
+      : `class="btn-checkin unlogged" data-log="✓ LOG TODAY" style="background:${habit.color};color:#0e0e0e;--habit-color:${habit.color}"`;
 
     return `
       <div class="habit-card" id="hcard-${hi}">
@@ -350,7 +359,15 @@ function render() {
           <div class="habit-actions">
             ${deleteMode
               ? `<input type="checkbox" class="delete-checkbox" data-hi="${hi}">`
-              : `<button class="btn-icon" onclick="openEditModal(${hi})">EDIT</button>`
+              : editMode
+                ? `<div class="edit-mode-actions">
+                     <div class="reorder-arrows">
+                       <button class="btn-arrow" onclick="moveHabit(${hi},-1)" ${hi === 0 ? 'disabled' : ''}>↑</button>
+                       <button class="btn-arrow" onclick="moveHabit(${hi},1)" ${hi === habits.length-1 ? 'disabled' : ''}>↓</button>
+                     </div>
+                     <button class="btn-icon" onclick="openEditModal(${hi})">EDIT</button>
+                   </div>`
+                : ''
             }
           </div>
         </div>
@@ -367,7 +384,7 @@ function render() {
 
         <div class="today-row">
           <button ${checkinBtn} onclick="checkInToday(${hi})">
-            ${isCheckedToday ? '✓ LOGGED TODAY' : '+ LOG TODAY'}
+            ${isCheckedToday ? '✓ UNLOG TODAY' : '+ LOG TODAY'}
           </button>
           <span class="checkin-date">${today}</span>
         </div>
@@ -381,6 +398,7 @@ function render() {
 function toggleDay(date, hi, blocked) {
   if (blocked) return;
   if (date > todayStr()) return;
+  if (date !== todayStr()) return; // lock all past days
   const habit = habits[hi];
   if (!habit.checked) habit.checked = [];
   const idx = habit.checked.indexOf(date);
@@ -389,11 +407,7 @@ function toggleDay(date, hi, blocked) {
     saveData();
     updateCell(date, hi);
     updateStats(hi);
-    // trigger sound + animation if checking IN today
-    if (date === todayStr()) {
-      const stats = calcStats(habit);
-      animateChip(hi, stats.streak);
-    }
+    animateChip(hi, calcStats(habit).streak);
   } else {
     habit.checked.splice(idx, 1);
     saveData();
@@ -406,14 +420,20 @@ function checkInToday(hi) {
   const today = todayStr();
   const habit = habits[hi];
   if (!habit.checked) habit.checked = [];
-  if (!habit.checked.includes(today)) {
+  const idx = habit.checked.indexOf(today);
+  if (idx === -1) {
     habit.checked.push(today);
     saveData();
     updateCell(today, hi);
     updateStats(hi);
     updateCheckinBtn(hi);
-    const stats = calcStats(habit);
-    animateChip(hi, stats.streak);
+    animateChip(hi, calcStats(habit).streak);
+  } else {
+    habit.checked.splice(idx, 1);
+    saveData();
+    updateCell(today, hi);
+    updateStats(hi);
+    updateCheckinBtn(hi);
   }
 }
 
@@ -465,15 +485,20 @@ function updateCheckinBtn(hi) {
   const habit = habits[hi];
   const isChecked = (habit.checked || []).includes(todayStr());
   if (isChecked) {
-    btn.textContent = '✓ LOGGED TODAY';
-    btn.className = 'btn-checkin done';
+    btn.textContent = '✓ UNLOG TODAY';
+    btn.className = 'btn-checkin logged';
     btn.style.background = '';
     btn.style.color = '';
+    btn.setAttribute('data-unlog', '− UNLOG TODAY');
+    btn.style.setProperty('--habit-color', habit.color);
   } else {
     btn.textContent = '+ LOG TODAY';
-    btn.className = 'btn-checkin';
+    btn.className = 'btn-checkin unlogged';
     btn.style.background = habit.color;
     btn.style.color = '#0e0e0e';
+    btn.style.setProperty('--habit-color', habit.color);
+    btn.setAttribute('data-log', '✓ LOG TODAY');
+    btn.removeAttribute('data-unlog');
   }
 }
 
@@ -517,6 +542,89 @@ function confirmDelete() {
   indicesToDelete.forEach(i => habits.splice(i, 1));
   saveData();
   exitDeleteMode();
+}
+
+// ── EDIT MODE ──
+let editMode = false;
+
+function enterEditMode() {
+  editMode = true;
+  render();
+  document.getElementById('btn-add-header').style.display    = 'none';
+  document.getElementById('btn-delete-header').style.display = 'none';
+  document.getElementById('btn-edit-header').style.display   = 'none';
+
+  const bar = document.createElement('div');
+  bar.id = 'edit-bar';
+  bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0a0f1a;border-top:1px solid #1a3a6a;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:100;flex-wrap:wrap;font-family:JetBrains Mono,monospace;';
+  bar.innerHTML = `
+    <span style="font-size:11px;color:#58a6ff;letter-spacing:0.1em;">// USE ↑↓ TO REORDER · EDIT TO RENAME OR RECOLOR</span>
+    <button class="btn-delete-confirm" style="background:#58a6ff;" onclick="exitEditMode()">DONE</button>
+  `;
+  document.body.appendChild(bar);
+}
+
+function exitEditMode() {
+  editMode = false;
+  const bar = document.getElementById('edit-bar');
+  if (bar) bar.remove();
+  render();
+}
+
+function moveHabit(hi, dir) {
+  const newIdx = hi + dir;
+  if (newIdx < 0 || newIdx >= habits.length) return;
+  const tmp      = habits[hi];
+  habits[hi]     = habits[newIdx];
+  habits[newIdx] = tmp;
+  saveData();
+  render();
+}
+
+// ── CARD PICKER ──
+let cardPickerShare = false;
+
+function openCardPicker(share) {
+  cardPickerShare = share;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'sheet-overlay';
+  overlay.id = 'card-picker-overlay';
+  overlay.onclick = (e) => { if (e.target === overlay) closeCardPicker(); };
+
+  const habitsHtml = habits.map((habit, hi) => {
+    const stats = calcStats(habit);
+    return `
+      <div class="sheet-habit" onclick="pickHabitCard(${hi})">
+        <div class="sheet-habit-dot" style="background:${habit.color}"></div>
+        <div class="sheet-habit-name">${escHtml(habit.name)}</div>
+        <div class="sheet-habit-streak">
+          ${chainSVG(habit.color).replace(/width="14px"/g,'width="12px"').replace(/height="14px"/g,'height="12px"')}
+          ${stats.streak} day streak
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div class="sheet">
+      <div class="sheet-title">// Choose a habit to share</div>
+      <div class="sheet-habits">${habitsHtml}</div>
+      <button class="sheet-cancel" onclick="closeCardPicker()">CANCEL</button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function closeCardPicker() {
+  const overlay = document.getElementById('card-picker-overlay');
+  if (overlay) overlay.remove();
+}
+
+function pickHabitCard(hi) {
+  closeCardPicker();
+  exportCard(cardPickerShare, hi);
 }
 
 // ── TOOLTIP ──
@@ -640,114 +748,181 @@ function saveHabit() {
 }
 
 // ── EXPORT ──
-function exportCard(share = false) {
+function exportCard(share = false, hi = 0) {
+  const habit = habits[hi];
+  if (!habit) return;
+
   const canvas = document.getElementById('export-canvas');
-  const ctx = canvas.getContext('2d');
-  const W        = 900;
-  const HABIT_H  = 160;
-  const HEADER_H = 80;
-  const FOOTER_H = 60;
-  const PAD      = 48;
-  const H        = HEADER_H + habits.length * HABIT_H + FOOTER_H + PAD;
-  canvas.width  = W;
-  canvas.height = H;
+  const ctx    = canvas.getContext('2d');
+
+  const S   = 1080;
+  const PAD = 72;
+  canvas.width  = S;
+  canvas.height = S;
+
+  const color = habit.color;
+
   // Background
-  ctx.fillStyle = '#0e0e0e';
-  ctx.fillRect(0, 0, W, H);
-  // Subtle horizontal rules
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += 28) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  ctx.fillStyle = '#0a0a0a';
+  ctx.fillRect(0, 0, S, S);
+
+  // Grain
+  const grain = ctx.createImageData(S, S);
+  for (let i = 0; i < grain.data.length; i += 4) {
+    const v = Math.random() * 18;
+    grain.data[i] = grain.data[i+1] = grain.data[i+2] = v;
+    grain.data[i+3] = 22;
   }
-  // Header
-  ctx.fillStyle = '#e8e8e8';
-  ctx.font = 'bold 22px "JetBrains Mono", monospace';
-  ctx.fillText('UNBROKEN', PAD, 52);
-  ctx.fillStyle = '#444';
-  ctx.font = '13px "JetBrains Mono", monospace';
-  ctx.fillText(`// ${currentYear()} · ${todayStr()}`, PAD + 130, 52);
-  // Habits
-  const weeks  = buildYearGrid();
-  const CELL   = 10;
-  const GAP    = 2;
-  const GRID_W = weeks.length * (CELL + GAP);
-  const xStart = (W - GRID_W) / 2;
-  const today  = todayStr();
-  habits.forEach((habit, hi) => {
-    const y0      = HEADER_H + hi * HABIT_H;
-    const checked = new Set(habit.checked || []);
-    const stats   = calcStats(habit);
-    // Name
-    ctx.fillStyle = habit.color;
-    ctx.font = 'bold 14px "JetBrains Mono", monospace';
-    ctx.fillText(habit.name.toUpperCase(), PAD, y0 + 22);
-    // Stats line
-    ctx.fillStyle = '#666';
-    ctx.font = '11px "JetBrains Mono", monospace';
-    ctx.fillText(
-      `${stats.streak} streak · ${stats.longest} best · ${stats.total} days · ${stats.rate}% rate`,
-      PAD, y0 + 40
-    );
-    // Grid
-    const gridY = y0 + 55;
-    weeks.forEach((week, wi) => {
-      week.forEach((cell, di) => {
-        if (!cell.inYear) return;
-        const cx       = xStart + wi * (CELL + GAP);
-        const cy       = gridY  + di * (CELL + GAP);
-        const isFilled = checked.has(cell.date);
-        const isFuture = cell.date > today;
-        ctx.fillStyle = isFilled ? habit.color : isFuture ? '#131313' : '#1c1c1c';
+  ctx.putImageData(grain, 0, 0);
+
+  // Subtle grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < S; y += 32) {
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(S,y); ctx.stroke();
+  }
+
+  // Chain shadow detail — decorative background
+  ctx.save();
+  ctx.globalAlpha = 0.045;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 22;
+  ctx.lineCap = 'round';
+  const linkW = 130, linkH = 75;
+  const chainX = S - 160, chainY = S - 220;
+  for (let i = 0; i < 5; i++) {
+    const cx = chainX - i * (linkW * 0.58);
+    const cy = chainY + (i % 2 === 0 ? 0 : linkH * 0.5);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, linkW/2, linkH/2, i * 0.28, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 11;
+  const slW = 65, slH = 38;
+  for (let i = 0; i < 6; i++) {
+    const cx = 130 + i * (slW * 0.52);
+    const cy = 110 + (i % 2 === 0 ? 0 : slH * 0.5);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, slW/2, slH/2, i * 0.22, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Left accent bar
+  const barGrad = ctx.createLinearGradient(0, 0, 0, S);
+  barGrad.addColorStop(0, color);
+  barGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 0, 3, S);
+
+  // ── LAST 16 WEEKS GRID ──
+  const CELL = 38, GAP = 7, ROWS = 7, COLS = 16;
+  const step  = CELL + GAP;
+  const gridW = COLS * step - GAP;
+  const gridH = ROWS * step - GAP;
+  const gridX = (S - gridW) / 2;
+  const gridY = S - PAD - gridH - 24;
+
+  const today     = todayStr();
+  const checked   = new Set(habit.checked || []);
+  const todayDate = new Date();
+  const dayOfWeek = todayDate.getDay();
+  const endDate   = new Date(todayDate);
+  endDate.setDate(endDate.getDate() - dayOfWeek + 6);
+  const startDate = new Date(endDate);
+  startDate.setDate(startDate.getDate() - (COLS * 7) + 1);
+
+  for (let col = 0; col < COLS; col++) {
+    for (let row = 0; row < ROWS; row++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + col * 7 + row);
+      const ds      = fmtDate(d);
+      const cx      = gridX + col * step;
+      const cy      = gridY + row * step;
+      const isFuture = ds > today;
+      const isFilled = checked.has(ds);
+      const isToday  = ds === today;
+
+      ctx.fillStyle = isFilled
+        ? color
+        : isFuture
+          ? 'rgba(255,255,255,0.03)'
+          : 'rgba(255,255,255,0.07)';
+
+      ctx.beginPath();
+      ctx.roundRect(cx, cy, CELL, CELL, 5);
+      ctx.fill();
+
+      if (isToday) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.roundRect(cx, cy, CELL, CELL, 1.5);
-        ctx.fill();
-        // Today outline
-        if (cell.date === today) {
-          ctx.strokeStyle = '#e8e8e8';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.roundRect(cx, cy, CELL, CELL, 1.5);
-          ctx.stroke();
-        }
-      });
-    });
-  });
-  // Footer rule
-  ctx.fillStyle = '#2a2a2a';
-  ctx.fillRect(0, H - FOOTER_H, W, 1);
-  // Footer left
-  ctx.fillStyle = '#444';
-  ctx.font = '11px "JetBrains Mono", monospace';
-  ctx.textAlign = 'left';
-  ctx.fillText('unbroken.fyi · your year in pixels', PAD, H - 22);
-  // Footer right
-  const totalDays = habits.reduce((s, h) =>
-    s + (h.checked || []).filter(d => d.startsWith(String(currentYear()))).length, 0
+        ctx.roundRect(cx, cy, CELL, CELL, 5);
+        ctx.stroke();
+      }
+    }
+  }
+
+  // ── STREAK NUMBER — hero ──
+  const stats     = calcStats(habit);
+  const streakStr = String(stats.streak);
+  const fontSize  = streakStr.length > 2 ? 190 : 230;
+
+  ctx.textAlign  = 'left';
+  ctx.fillStyle  = color;
+  ctx.font       = `900 ${fontSize}px Georgia, serif`;
+  ctx.fillText(streakStr, PAD, gridY - 72);
+
+  // DAY STREAK label
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font      = '500 30px "JetBrains Mono", monospace';
+  ctx.fillText('DAY STREAK', PAD, gridY - 28);
+
+  // Habit name
+  ctx.fillStyle = '#e8e8e8';
+  ctx.font      = '700 40px Georgia, serif';
+  ctx.fillText(habit.name.toUpperCase(), PAD, PAD + 56);
+
+  // Stats row
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.font      = '400 23px "JetBrains Mono", monospace';
+  ctx.fillText(
+    `${stats.longest} best  ·  ${stats.total} total  ·  ${stats.rate}% rate`,
+    PAD, PAD + 100
   );
+
+  // Logo bottom left
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font      = '700 24px Georgia, serif';
+  ctx.fillText('Un', PAD, S - PAD + 10);
+  const unW = ctx.measureText('Un').width;
+  ctx.font      = '300 italic 24px Georgia, serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.fillText('broken', PAD + unW - 1, S - PAD + 10);
+
+  // Watermark bottom right
   ctx.textAlign = 'right';
-  ctx.fillStyle = '#333';
-  ctx.fillText(`${totalDays} total check-ins this year`, W - PAD, H - 22);
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.font      = '400 21px "JetBrains Mono", monospace';
+  ctx.fillText('unbroken.fyi', S - PAD, S - PAD + 10);
   ctx.textAlign = 'left';
 
-  // ── SHARE OR DOWNLOAD ──
+  // ── OUTPUT ──
   canvas.toBlob(async (blob) => {
     if (share && navigator.share && navigator.canShare) {
       try {
-        const file = new File([blob], `unbroken-${currentYear()}.png`,
+        const file = new File([blob], `unbroken-${habit.name}-${currentYear()}.png`,
           { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: 'Unbroken — My year in pixels',
+            title: `My ${habit.name} streak — Unbroken`,
             files: [file]
           });
-          return; // shared successfully, stop here no matter what
+          return;
         }
       } catch(e) {
-        if (e.name === 'AbortError') return; // user cancelled, don't download
-        // only fall through to clipboard/download on genuine errors
+        if (e.name === 'AbortError') return;
       }
-      return; // canShare returned false, don't download either
     }
     if (share) {
       try {
@@ -761,13 +936,10 @@ function exportCard(share = false) {
           setTimeout(() => btn.textContent = orig, 2000);
         }
         return;
-      } catch(e) {
-        // clipboard failed, fall through to download
-      }
+      } catch(e) {}
     }
-    // Default download
     const link = document.createElement('a');
-    link.download = `unbroken-${currentYear()}.png`;
+    link.download = `unbroken-${habit.name}-${currentYear()}.png`;
     link.href = URL.createObjectURL(blob);
     link.click();
   }, 'image/png');
@@ -786,25 +958,19 @@ function escHtml(s) {
 document.addEventListener('keydown', (e) => {
   const typing = document.activeElement.tagName === 'INPUT';
 
-  // N — open add habit modal
-  if ((e.key === 'n' || e.key === 'N') && !typing && !deleteMode) {
+  if ((e.key === 'n' || e.key === 'N') && !typing && !deleteMode && !editMode)
     openModal();
-  }
 
-  // D or Backspace — enter delete mode
-  if ((e.key === 'd' || e.key === 'D' || e.key === 'Backspace') && !typing && !deleteMode && habits.length > 0) {
+  if ((e.key === 'd' || e.key === 'D' || e.key === 'Backspace') && !typing && !deleteMode && !editMode && habits.length > 0)
     enterDeleteMode();
-  }
 
-  // E — edit first habit (or only habit)
-  if ((e.key === 'e' || e.key === 'E') && !typing && !deleteMode && habits.length > 0) {
-    openEditModal(0);
-  }
+  if ((e.key === 'e' || e.key === 'E') && !typing && !deleteMode && !editMode && habits.length > 0)
+    enterEditMode();
 
-  // Escape — close modal or exit delete mode
   if (e.key === 'Escape') {
     if (document.getElementById('modal').style.display !== 'none') closeModal();
     else if (deleteMode) exitDeleteMode();
+    else if (editMode)   exitEditMode();
   }
 });
 
