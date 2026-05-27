@@ -1102,3 +1102,22 @@ header {
   font-size: 11px;
   letter-spacing: 0.08em;
 }
+
+@keyframes riskPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,68,68,0.4); }
+  70%  { box-shadow: 0 0 0 6px rgba(255,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,68,68,0); }
+}
+
+.streak-chip.at-risk {
+  animation: riskPulse 1.5s ease infinite;
+}
+
+.risk-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #ff4444;
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin-top: 3px;
+}

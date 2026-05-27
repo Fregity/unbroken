@@ -997,12 +997,22 @@ function checkStreakRisk() {
     const checked = new Set(habit.checked || []);
     const chip    = document.getElementById(`chip-${hi}`);
     if (!chip) return;
-    if (stats.streak > 0 && !checked.has(today) && hour >= 17) {
-      chip.style.borderColor = '#ff4444';
-      chip.title = `Your ${habit.name} streak is at risk, log today before midnight`;
-    } else {
-      chip.style.borderColor = stats.streak > 0 && habits[hi].color ? '' : '';
-      chip.title = '';
+    const isAtRisk = stats.streak > 0 && !checked.has(today) && hour >= 17;
+
+    chip.classList.toggle('at-risk', isAtRisk);
+    chip.style.borderColor = isAtRisk ? '#ff4444' : '';
+    chip.title = isAtRisk ? `Your ${habit.name} streak is at risk` : '';
+
+    // add or remove risk label below chip
+    const existingLabel = document.getElementById(`risk-label-${hi}`);
+    if (isAtRisk && !existingLabel) {
+      const label = document.createElement('div');
+      label.className = 'risk-label';
+      label.id = `risk-label-${hi}`;
+      label.textContent = 'log before midnight!';
+      chip.insertAdjacentElement('afterend', label);
+    } else if (!isAtRisk && existingLabel) {
+      existingLabel.remove();
     }
   });
 }
