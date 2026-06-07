@@ -31,16 +31,13 @@ function saveData() {
 }
 
 // ── DATE HELPERS ──
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-function currentYear() { return new Date().getFullYear(); }
-
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+
+function todayStr() { return fmtDate(new Date()); }
+
+function currentYear() { return new Date().getFullYear(); }
 
 // ── GRID LOGIC ──
 // Builds array of 52+ weeks × 7 days covering the full current year
@@ -106,13 +103,14 @@ function calcStats(habit) {
 
   // All checked days for streak calculations
   const allChecked = [...(habit.checked || [])].sort();
+  const checkedSet = new Set(allChecked);
 
   // Current streak — walk backwards from today
   let streak = 0;
   const cursor = new Date();
   while (true) {
     const ds = fmtDate(cursor);
-    if (allChecked.includes(ds)) {
+    if (checkedSet.has(ds)) {
       streak++;
       cursor.setDate(cursor.getDate() - 1);
     } else if (ds === today) {
@@ -274,10 +272,6 @@ function render() {
     return;
   }
 
-  if (window.innerWidth <= 768) {
-    setTimeout(scrollToToday, 50);
-  }
-
   empty.style.display = 'none';
   exportBar.style.display = 'flex';
   addBtn.style.display = habits.length < 5 && !deleteMode && !editMode ? 'block' : 'none';
@@ -330,7 +324,7 @@ function render() {
 
     const isCheckedToday = checked.has(today);
     const checkinBtn = isCheckedToday
-      ? `class="btn-checkin logged" data-unlog="− UNLOG TODAY" style="--habit-color:${habit.color}"`
+      ? `class="btn-checkin logged" data-unlog="✓ UNLOG TODAY" style="--habit-color:${habit.color}"`
       : `class="btn-checkin unlogged" data-log="✓ LOG TODAY" style="background:${habit.color};color:#0e0e0e;--habit-color:${habit.color}"`;
     
     return `
@@ -364,10 +358,10 @@ function render() {
               : editMode
                 ? `<div class="edit-mode-actions">
                      <div class="reorder-arrows">
-                       <button class="btn-arrow" onclick="moveHabit(${hi},-1)" ${hi === 0 ? 'disabled' : ''}>↑</button>
-                       <button class="btn-arrow" onclick="moveHabit(${hi},1)" ${hi === habits.length-1 ? 'disabled' : ''}>↓</button>
+                       <button class="btn-arrow" onclick="moveHabit(${hi},-1)" ${hi === 0 ? 'disabled' : ''} aria-label="Move ${escHtml(habit.name)} up">↑</button>
+                       <button class="btn-arrow" onclick="moveHabit(${hi},1)" ${hi === habits.length-1 ? 'disabled' : ''} aria-label="Move ${escHtml(habit.name)} down">↓</button>
                      </div>
-                     <button class="btn-icon" onclick="openEditModal(${hi})">EDIT</button>
+                     <button class="btn-icon" onclick="openEditModal(${hi})" aria-label="Edit ${escHtml(habit.name)}">EDIT</button>
                    </div>`
                 : ''
             }
@@ -502,7 +496,6 @@ function updateCheckinBtn(hi) {
     btn.setAttribute('data-log', '✓ LOG TODAY');
     btn.removeAttribute('data-unlog');
   }
-  checkStreakRisk();
 }
 
 // ── DELETE MODE ──
@@ -559,10 +552,9 @@ function enterEditMode() {
 
   const bar = document.createElement('div');
   bar.id = 'edit-bar';
-  bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0a0f1a;border-top:1px solid #1a3a6a;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:100;flex-wrap:wrap;font-family:JetBrains Mono,monospace;';
   bar.innerHTML = `
-    <span style="font-size:11px;color:#58a6ff;letter-spacing:0.1em;">// USE ↑↓ TO REORDER · EDIT TO RENAME OR RECOLOR</span>
-    <button class="btn-delete-confirm" style="background:#58a6ff;" onclick="exitEditMode()">DONE</button>
+    <span class="edit-bar-label">// USE ↑↓ TO REORDER · EDIT TO RENAME OR RECOLOR</span>
+    <button class="btn-delete-confirm btn-edit-done" onclick="exitEditMode()">DONE</button>
   `;
   document.body.appendChild(bar);
 }
@@ -602,7 +594,7 @@ function openCardPicker(share) {
         <div class="sheet-habit-dot" style="background:${habit.color}"></div>
         <div class="sheet-habit-name">${escHtml(habit.name)}</div>
         <div class="sheet-habit-streak">
-          ${chainSVG(habit.color).replace(/width="14px"/g,'width="12px"').replace(/height="14px"/g,'height="12px"')}
+          ${chainSVG(habit.color)}
           ${stats.streak} day streak
         </div>
       </div>
@@ -631,7 +623,7 @@ function pickHabitCard(hi) {
 }
 
 // ── TOOLTIP ──
-function showTooltip(e, date, hi, inYear) {
+function showTooltip(e, date, _isFilled, inYear) {
   if (!inYear) return;
   const tt = document.getElementById('tooltip');
   const [y, m, d] = date.split('-');
@@ -698,12 +690,6 @@ function selectColor(c) {
   });
 }
 
-function rgbToHex(rgb) {
-  const m = rgb.match(/\d+/g);
-  if (!m) return rgb;
-  return '#' + m.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-}
-
 function openEditModal(hi) {
   const habit = habits[hi];
   selectedColor = habit.color;
@@ -732,10 +718,6 @@ function saveEdit(hi) {
   habits[hi].color = selectedColor;
   saveData();
   closeModal();
-  // reset modal back to create mode for next time
-  document.getElementById('modal-title').textContent = 'New Habit';
-  document.getElementById('modal-save-btn').textContent = 'CREATE →';
-  document.getElementById('modal-save-btn').onclick = saveHabit;
   render();
 }
 
@@ -754,6 +736,7 @@ function saveHabit() {
 function exportCard(share = false, hi = 0) {
   const habit = habits[hi];
   if (!habit) return;
+  const filename = `unbroken-${slugify(habit.name)}-${currentYear()}.png`;
 
   const canvas = document.getElementById('export-canvas');
   const ctx    = canvas.getContext('2d');
@@ -764,73 +747,85 @@ function exportCard(share = false, hi = 0) {
   canvas.height = S;
 
   const color = habit.color;
+  const stats = calcStats(habit);
+  const streakStr = String(stats.streak);
+  const streakSize = streakStr.length > 3 ? 176 : streakStr.length > 2 ? 194 : 228;
+  const accentSoft = hexToRgba(color, 0.22);
+  const accentMid = hexToRgba(color, 0.58);
+  const accentDeep = hexToRgba(color, 0.92);
 
-  // Background
-  ctx.fillStyle = '#0a0a0a';
+  const bg = ctx.createLinearGradient(0, 0, S, S);
+  bg.addColorStop(0, '#070707');
+  bg.addColorStop(0.48, '#0d0e11');
+  bg.addColorStop(1, '#101114');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, S, S);
 
-  // Grain
+  const glowA = ctx.createRadialGradient(S * 0.18, S * 0.18, 0, S * 0.18, S * 0.18, S * 0.95);
+  glowA.addColorStop(0, accentSoft);
+  glowA.addColorStop(0.4, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowA;
+  ctx.fillRect(0, 0, S, S);
+
+  const glowB = ctx.createRadialGradient(S * 0.78, S * 0.24, 0, S * 0.78, S * 0.24, S * 0.68);
+  glowB.addColorStop(0, hexToRgba(color, 0.12));
+  glowB.addColorStop(0.55, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glowB;
+  ctx.fillRect(0, 0, S, S);
+
   const grain = ctx.createImageData(S, S);
   for (let i = 0; i < grain.data.length; i += 4) {
-    const v = Math.random() * 18;
-    grain.data[i] = grain.data[i+1] = grain.data[i+2] = v;
-    grain.data[i+3] = 22;
+    const v = Math.random() * 14;
+    grain.data[i] = grain.data[i + 1] = grain.data[i + 2] = v;
+    grain.data[i + 3] = 16;
   }
   ctx.putImageData(grain, 0, 0);
 
-  // Subtle grid lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < S; y += 32) {
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(S,y); ctx.stroke();
-  }
-
-  // Chain shadow detail — decorative background
   ctx.save();
-  ctx.globalAlpha = 0.045;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 22;
+  ctx.strokeStyle = hexToRgba(color, 0.26);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(26.5, 26.5, S - 53, S - 53);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.strokeRect(56.5, 56.5, S - 113, S - 113);
+  ctx.restore();
+
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = accentDeep;
+  ctx.lineWidth = 20;
   ctx.lineCap = 'round';
-  const linkW = 130, linkH = 75;
-  const chainX = S - 160, chainY = S - 220;
+  const linkW = 146, linkH = 86;
+  const chainX = S - 194, chainY = S - 244;
   for (let i = 0; i < 5; i++) {
     const cx = chainX - i * (linkW * 0.58);
-    const cy = chainY + (i % 2 === 0 ? 0 : linkH * 0.5);
+    const cy = chainY + (i % 2 === 0 ? 0 : linkH * 0.44);
     ctx.beginPath();
-    ctx.ellipse(cx, cy, linkW/2, linkH/2, i * 0.28, 0, Math.PI*2);
+    ctx.ellipse(cx, cy, linkW / 2, linkH / 2, i * 0.22, 0, Math.PI * 2);
     ctx.stroke();
   }
-  ctx.lineWidth = 11;
-  const slW = 65, slH = 38;
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 10;
   for (let i = 0; i < 6; i++) {
-    const cx = 130 + i * (slW * 0.52);
-    const cy = 110 + (i % 2 === 0 ? 0 : slH * 0.5);
+    const cx = 158 + i * 52;
+    const cy = 138 + (i % 2 === 0 ? 0 : 20);
     ctx.beginPath();
-    ctx.ellipse(cx, cy, slW/2, slH/2, i * 0.22, 0, Math.PI*2);
+    ctx.ellipse(cx, cy, 32, 18, -0.18 + i * 0.03, 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.restore();
 
-  // Left accent bar
-  const barGrad = ctx.createLinearGradient(0, 0, 0, S);
-  barGrad.addColorStop(0, color);
-  barGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = barGrad;
-  ctx.fillRect(0, 0, 3, S);
-
-  // ── LAST 16 WEEKS GRID ──
   const CELL = 38, GAP = 7, ROWS = 7, COLS = 16;
   const step  = CELL + GAP;
   const gridW = COLS * step - GAP;
   const gridH = ROWS * step - GAP;
   const gridX = (S - gridW) / 2;
-  const gridY = S - PAD - gridH - 24;
+  const gridY = S - PAD - gridH - 38;
 
-  const today     = todayStr();
-  const checked   = new Set(habit.checked || []);
+  const today = todayStr();
+  const checked = new Set(habit.checked || []);
   const todayDate = new Date();
   const dayOfWeek = todayDate.getDay();
-  const endDate   = new Date(todayDate);
+  const endDate = new Date(todayDate);
   endDate.setDate(endDate.getDate() - dayOfWeek + 6);
   const startDate = new Date(endDate);
   startDate.setDate(startDate.getDate() - (COLS * 7) + 1);
@@ -839,86 +834,126 @@ function exportCard(share = false, hi = 0) {
     for (let row = 0; row < ROWS; row++) {
       const d = new Date(startDate);
       d.setDate(d.getDate() + col * 7 + row);
-      const ds      = fmtDate(d);
-      const cx      = gridX + col * step;
-      const cy      = gridY + row * step;
+      const ds = fmtDate(d);
+      const cx = gridX + col * step;
+      const cy = gridY + row * step;
       const isFuture = ds > today;
       const isFilled = checked.has(ds);
-      const isToday  = ds === today;
+      const isToday = ds === today;
 
-      ctx.fillStyle = isFilled
-        ? color
-        : isFuture
-          ? 'rgba(255,255,255,0.03)'
-          : 'rgba(255,255,255,0.07)';
-
+      ctx.fillStyle = isFilled ? accentMid : isFuture ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.06)';
       ctx.beginPath();
-      ctx.roundRect(cx, cy, CELL, CELL, 5);
+      ctx.roundRect(cx, cy, CELL, CELL, 6);
       ctx.fill();
 
+      if (isFilled) {
+        ctx.save();
+        const cellGlow = ctx.createLinearGradient(cx, cy, cx + CELL, cy + CELL);
+        cellGlow.addColorStop(0, hexToRgba(color, 0.85));
+        cellGlow.addColorStop(1, hexToRgba(color, 0.45));
+        ctx.fillStyle = cellGlow;
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        ctx.roundRect(cx + 1, cy + 1, CELL - 2, CELL - 2, 5);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1, 6);
+      ctx.stroke();
+      ctx.restore();
+
       if (isToday) {
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = accentDeep;
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.roundRect(cx, cy, CELL, CELL, 5);
+        ctx.roundRect(cx - 1, cy - 1, CELL + 2, CELL + 2, 7);
         ctx.stroke();
       }
     }
   }
 
-  // ── STREAK NUMBER — hero ──
-  const stats     = calcStats(habit);
-  const streakStr = String(stats.streak);
-  const fontSize  = streakStr.length > 2 ? 190 : 230;
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.82)';
+  ctx.font = '500 22px "JetBrains Mono", monospace';
+  ctx.fillText('UNBROKEN', PAD, 112);
 
-  ctx.textAlign  = 'left';
-  ctx.fillStyle  = color;
-  ctx.font       = `900 ${fontSize}px Georgia, serif`;
-  ctx.fillText(streakStr, PAD, gridY - 72);
+  ctx.fillStyle = '#eaeaea';
+  ctx.font = '700 42px Georgia, serif';
+  ctx.fillText(habit.name.toUpperCase(), PAD, 164);
 
-  // DAY STREAK label
-  ctx.fillStyle = 'rgba(255,255,255,0.3)';
-  ctx.font      = '500 30px "JetBrains Mono", monospace';
-  ctx.fillText('DAY STREAK', PAD, gridY - 28);
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = '400 22px "JetBrains Mono", monospace';
+  ctx.fillText(`${stats.longest} BEST  �  ${stats.total} TOTAL  �  ${stats.rate}% RATE`, PAD, 200);
+  ctx.restore();
 
-  // Habit name
-  ctx.fillStyle = '#e8e8e8';
-  ctx.font      = '700 40px Georgia, serif';
-  ctx.fillText(habit.name.toUpperCase(), PAD, PAD + 56);
+  ctx.save();
+  ctx.shadowColor = hexToRgba(color, 0.28);
+  ctx.shadowBlur = 28;
+  ctx.fillStyle = color;
+  ctx.font = `900 ${streakSize}px Georgia, serif`;
+  ctx.fillText(streakStr, PAD, 356);
+  ctx.shadowBlur = 0;
 
-  // Stats row
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.font      = '400 23px "JetBrains Mono", monospace';
-  ctx.fillText(
-    `${stats.longest} best  ·  ${stats.total} total  ·  ${stats.rate}% rate`,
-    PAD, PAD + 100
-  );
-
-  // Logo bottom left
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  ctx.font      = '700 24px Georgia, serif';
-  ctx.fillText('Un', PAD, S - PAD + 10);
-  const unW = ctx.measureText('Un').width;
-  ctx.font      = '300 italic 24px Georgia, serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.fillText('broken', PAD + unW - 1, S - PAD + 10);
-
-  // Watermark bottom right
-  ctx.textAlign = 'right';
   ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.font      = '400 21px "JetBrains Mono", monospace';
-  ctx.fillText('unbroken.fyi', S - PAD, S - PAD + 10);
-  ctx.textAlign = 'left';
+  ctx.font = '500 28px "JetBrains Mono", monospace';
+  ctx.fillText('DAY STREAK', PAD + 6, 390);
 
-  // ── OUTPUT ──
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.font = '400 18px "JetBrains Mono", monospace';
+  ctx.fillText('KEEP THE CHAIN INTACT', PAD + 6, 424);
+  ctx.restore();
+
+  ctx.save();
+  ctx.fillStyle = hexToRgba(color, 0.12);
+  roundRect(ctx, S - 262, 120, 180, 64, 18);
+  ctx.fill();
+  ctx.strokeStyle = hexToRgba(color, 0.4);
+  ctx.lineWidth = 1;
+  roundRect(ctx, S - 262, 120, 180, 64, 18);
+  ctx.stroke();
+  ctx.fillStyle = accentDeep;
+  ctx.font = '700 17px "JetBrains Mono", monospace';
+  ctx.fillText('YEAR IN PIXELS', S - 238, 159);
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD, S - 132);
+  ctx.lineTo(S - PAD, S - 132);
+  ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '700 24px Georgia, serif';
+  ctx.fillText('Un', PAD, S - 86);
+  const unW = ctx.measureText('Un').width;
+  ctx.font = '300 italic 24px Georgia, serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.24)';
+  ctx.fillText('broken', PAD + unW - 1, S - 86);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.font = '400 20px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('unbroken.fyi', S - PAD, S - 86);
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.font = '400 16px "JetBrains Mono", monospace';
+  ctx.fillText(`saved ${currentYear()}`, S - PAD, S - 48);
+  ctx.textAlign = 'left';
+  ctx.restore();
+
   canvas.toBlob(async (blob) => {
     if (share && navigator.share && navigator.canShare) {
       try {
-        const file = new File([blob], `unbroken-${habit.name}-${currentYear()}.png`,
-          { type: 'image/png' });
+        const file = new File([blob], filename, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `My ${habit.name} streak — Unbroken`,
+            title: `My ${habit.name} streak � Unbroken`,
             files: [file]
           });
           return;
@@ -935,20 +970,44 @@ function exportCard(share = false, hi = 0) {
         const btn = document.querySelector('.btn-export:not(.secondary)');
         if (btn) {
           const orig = btn.textContent;
-          btn.textContent = 'COPIED ✓';
+          btn.textContent = 'COPIED ?';
           setTimeout(() => btn.textContent = orig, 2000);
         }
         return;
       } catch(e) {}
     }
     const link = document.createElement('a');
-    link.download = `unbroken-${habit.name}-${currentYear()}.png`;
+    link.download = filename;
     link.href = URL.createObjectURL(blob);
     link.click();
   }, 'image/png');
 }
 
-// ── UTILS ──
+function hexToRgba(hex, alpha) {
+  const value = hex.replace('#', '');
+  const full = value.length === 3
+    ? value.split('').map(ch => ch + ch).join('')
+    : value;
+  const int = parseInt(full, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+}
+
+function slugify(s) {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'habit';
+}
+
 function escHtml(s) {
   return s
     .replace(/&/g, '&amp;')
@@ -1020,3 +1079,6 @@ function checkStreakRisk() {
 // ── INIT ──
 loadData();
 render();
+if (window.innerWidth <= 768 && habits.length > 0) {
+  setTimeout(scrollToToday, 50);
+}

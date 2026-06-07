@@ -13,11 +13,29 @@
 /* ── RESET ── */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Size-adjusted fallbacks so layout doesn't shift when webfonts load */
+@font-face {
+  font-family: 'Fraunces-fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 98%;
+  ascent-override: 92%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'JetBrainsMono-fallback';
+  src: local('Courier New'), local('Courier');
+  size-adjust: 85%;
+  ascent-override: 95%;
+  descent-override: 20%;
+  line-gap-override: 0%;
+}
+
 /* ── BASE ── */
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', 'JetBrainsMono-fallback', monospace;
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -37,7 +55,7 @@ body::after {
 header {
   padding: 36px 48px 32px;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
@@ -45,8 +63,8 @@ header {
 }
 
 .logo {
-  font-family: 'Fraunces', serif;
-  font-size: 26px;
+  font-family: 'Fraunces', 'Fraunces-fallback', serif;
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--text);
@@ -85,6 +103,13 @@ header {
 .btn-add:hover { opacity: 0.85; }
 .btn-add:disabled { opacity: 0.3; cursor: not-allowed; }
 
+.btn-add-secondary {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
 /* ── MAIN ── */
 main {
   padding: 48px;
@@ -100,7 +125,7 @@ main {
 }
 
 .empty-title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Fraunces', 'Fraunces-fallback', serif;
   font-size: clamp(36px, 6vw, 64px);
   font-weight: 600;
   letter-spacing: -0.03em;
@@ -176,8 +201,8 @@ main {
 }
 
 .habit-name {
-  font-family: 'Fraunces', serif;
-  font-size: 20px;
+  font-family: 'Fraunces', 'Fraunces-fallback', serif;
+  font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -354,12 +379,6 @@ main {
   transition: all 0.15s;
 }
 
-.btn-checkin.done {
-  background: var(--surface2);
-  color: var(--muted);
-  cursor: default;
-}
-
 .checkin-date {
   font-size: 10px;
   color: var(--muted);
@@ -458,7 +477,7 @@ main {
 @keyframes slideUp { to { transform: translateY(0); } }
 
 .modal-title {
-  font-family: 'Fraunces', serif;
+  font-family: 'Fraunces', 'Fraunces-fallback', serif;
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -588,7 +607,6 @@ main {
 .btn-modal:hover { opacity: 0.8; }
 
 /* ── MISC ── */
-.main-pad { padding-bottom: 80px; }
 #export-canvas { display: none; }
 
 /* ── TOOLTIP ── */
@@ -727,11 +745,6 @@ main {
 
 @media (max-width: 600px) {
   #delete-bar { padding-left: 20px; padding-right: 20px; }
-}
-
-/* ── HEADER LAYOUT UPDATE ── */
-header {
-  align-items: center;
 }
 
 .header-left {
@@ -950,6 +963,37 @@ header {
   align-items: center;
 }
 
+#edit-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #0a0f1a;
+  border-top: 1px solid #1a3a6a;
+  padding: 16px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 100;
+  flex-wrap: wrap;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.edit-bar-label {
+  font-size: 11px;
+  color: #58a6ff;
+  letter-spacing: 0.1em;
+}
+
+.btn-edit-done {
+  background: #58a6ff;
+}
+
+@media (max-width: 600px) {
+  #edit-bar { padding-left: 20px; padding-right: 20px; }
+}
+
 /* ── CARD PICKER SHEET ── */
 .sheet-overlay {
   position: fixed;
@@ -1053,13 +1097,14 @@ header {
   border: 1px solid var(--border);
   color: var(--muted);
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-checkin.logged:hover {
   background: rgba(255,0,0,0.08);
   border-color: #ff4444;
   color: #ff4444;
-  cursor: pointer;
   transition: all 0.15s;
 }
 
@@ -1073,11 +1118,6 @@ header {
   background: rgba(14,14,14,0.92);
   font-size: 11px;
   letter-spacing: 0.08em;
-}
-
-.btn-checkin.logged {
-  position: relative;
-  overflow: hidden;
 }
 
 .btn-checkin.unlogged {
@@ -1111,6 +1151,10 @@ header {
 
 .streak-chip.at-risk {
   animation: riskPulse 1.5s ease infinite;
+}
+
+.streak-chip.at-risk.animate-snap {
+  animation: riskPulse 1.5s ease infinite, chipGlow 0.6s ease forwards;
 }
 
 .risk-label {

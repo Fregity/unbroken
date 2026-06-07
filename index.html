@@ -12,6 +12,8 @@
   <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+  <meta name="description" content="A GitHub-style habit tracker that turns your daily check-ins into a beautiful heatmap. No account needed. No fluff. Just don't break the chain.">
+
   <!-- Socials preview -->
   <meta property="og:title" content="Unbroken — Track Your Habits, Your Year in Pixels">
   <meta property="og:description" content="A GitHub-style habit tracker that turns your daily check-ins into a beautiful heatmap. No account needed. No fluff. Just don't break the chain.">
@@ -34,9 +36,9 @@
     </div>
     <div class="header-right">
       <span class="year-label" id="year-label"></span>
-      <button class="btn-add" id="btn-delete-header" onclick="enterDeleteMode()" style="display:none; background:none; border:1px solid #2a2a2a; color:#666;">− DELETE</button>
-      <button class="btn-add" id="btn-edit-header" onclick="enterEditMode()" style="display:none; background:none; border:1px solid #2a2a2a; color:#666;">✎ EDIT</button>
-      <button class="btn-add" id="btn-add-header" onclick="openModal()">+ ADD HABIT</button>
+      <button class="btn-add btn-add-secondary" id="btn-delete-header" onclick="enterDeleteMode()" aria-label="Delete habits">− DELETE</button>
+      <button class="btn-add btn-add-secondary" id="btn-edit-header" onclick="enterEditMode()" aria-label="Edit habits">✎ EDIT</button>
+      <button class="btn-add" id="btn-add-header" onclick="openModal()" aria-label="Add a new habit">+ ADD HABIT</button>
     </div>
   </header>
 
@@ -129,6 +131,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
