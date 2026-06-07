@@ -786,21 +786,48 @@ function exportCard(share = false, hi = 0) {
   ctx.strokeRect(32.5, 32.5, S - 65, S - 65);
 
   // ─────────────────────────────
-  // HEADER (clean, centered, editorial)
+  // HEADER (optically centered, stable)
   // ─────────────────────────────
-  ctx.textAlign = 'center';
+  ctx.save();
 
-  ctx.fillStyle = '#f2f2f2';
+  const titleY = 170;
+  const centerX = S / 2;
+
+  // we build full width using actual rendered fonts
   ctx.font = '700 120px Fraunces, serif';
-  ctx.fillText('UNBROKEN', S / 2, 170);
+  const unW = ctx.measureText('Un').width;
 
-  // subtle divider line
-  ctx.fillStyle = accentLine;
-  ctx.fillRect(S / 2 - 60, 205, 120, 1);
+  ctx.font = '300 italic 120px Fraunces, serif';
+  const brokenW = ctx.measureText('broken').width;
+
+  const totalW = unW + brokenW;
+
+  // IMPORTANT: optical tweak (this is the missing piece)
+  const opticalShift = -10; // try -6 to -14 if needed
+
+  const startX = centerX - totalW / 2 + opticalShift;
+
+  // draw "Un"
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(255,255,255,1)';
+  ctx.font = '700 120px Fraunces, serif';
+  ctx.fillText('Un', startX, titleY);
+
+  // draw "broken"
+  ctx.font = '300 italic 120px Fraunces, serif';
+  ctx.fillText('broken', startX + unW - 6, titleY);
+
+  ctx.restore();
 
   // ─────────────────────────────
   // STREAK (primary metric)
   // ─────────────────────────────
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // kills any accidental transforms
+  ctx.textAlign = 'center';
+  ctx.shadowBlur = 0;
+
   const streakSize = streak.length > 3 ? 210 : 250;
 
   ctx.fillStyle = '#ffffff';
@@ -811,9 +838,17 @@ function exportCard(share = false, hi = 0) {
   ctx.font = '500 22px JetBrains Mono, monospace';
   ctx.fillText('DAY STREAK', S / 2, 450);
 
+  ctx.restore();
+
   // ─────────────────────────────
   // HABIT NAME
   // ─────────────────────────────
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // kills any accidental transforms
+  ctx.textAlign = 'center';
+  ctx.shadowBlur = 0;
+
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = '600 54px Fraunces, serif';
   ctx.fillText(habit.name.toUpperCase(), S / 2, 520);
@@ -822,9 +857,17 @@ function exportCard(share = false, hi = 0) {
   ctx.font = '400 16px JetBrains Mono, monospace';
   ctx.fillText("DON'T BREAK THE CHAIN", S / 2, 552);
 
+  ctx.restore();
+
   // ─────────────────────────────
   // STATS (minimal system line, not UI chips)
   // ─────────────────────────────
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // kills any accidental transforms
+  ctx.textAlign = 'center';
+  ctx.shadowBlur = 0;
+
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.font = '500 16px JetBrains Mono, monospace';
   ctx.fillText(
@@ -833,9 +876,17 @@ function exportCard(share = false, hi = 0) {
     585
   );
 
+  ctx.restore();
+
   // ─────────────────────────────
   // GRID (visual anchor, heavier presence)
   // ─────────────────────────────
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0); // kills any accidental transforms
+  ctx.textAlign = 'center';
+  ctx.shadowBlur = 0;
+
   const CELL = 38;
   const GAP = 6;
   const ROWS = 7;
@@ -883,6 +934,8 @@ function exportCard(share = false, hi = 0) {
     }
   }
 
+  ctx.restore();
+
   // ─────────────────────────────
   // FOOTER (match site identity)
   // ─────────────────────────────
@@ -895,7 +948,7 @@ function exportCard(share = false, hi = 0) {
   const w = ctx.measureText('Un').width;
 
   ctx.font = '300 italic 22px Fraunces, serif';
-  ctx.fillText('broken', 70 + w - 2, 1020);
+  ctx.fillText('broken.fyi', 70 + w - 2, 1020);
 
   ctx.textAlign = 'right';
 
