@@ -783,52 +783,28 @@ function exportCard(share = false, hi = 0) {
   ctx.putImageData(grain, 0, 0);
 
   // ─────────────────────────────
-  // HEAVY CHAIN (uniform + intentional)
-  // ─────────────────────────────
-  ctx.save();
-  ctx.globalAlpha = 0.14;
-  ctx.strokeStyle = hexToRgba(color, 0.9);
-  ctx.lineWidth = 18;
-
-  const startX = -120;
-  const startY = 120;
-
-  const linkW = 140;
-  const linkH = 78;
-
-  for (let i = 0; i < 10; i++) {
-    const x = startX + i * 120;
-    const y = startY + (i % 2 ? 40 : 0);
-
-    ctx.beginPath();
-    ctx.ellipse(x, y, linkW / 2, linkH / 2, 0.25, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // ─────────────────────────────
   // HERO TITLE (BIG + CENTERED ENERGY)
   // ─────────────────────────────
   ctx.save();
 
   ctx.textAlign = 'center';
 
-  ctx.fillStyle = 'rgba(255,255,255,0.25)';
-  ctx.font = '600 22px JetBrains Mono, monospace';
-  ctx.fillText('UNBROKEN', S / 2, 140);
-
   ctx.fillStyle = '#ffffff';
   ctx.shadowColor = accentStrong;
   ctx.shadowBlur = 40;
 
   ctx.font = '900 110px Inter, system-ui, sans-serif';
-  ctx.fillText('UNBROKEN', S / 2, 255);
+  ctx.fillText('UNBROKEN', S / 2, 190);
 
   ctx.shadowBlur = 0;
 
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = '500 34px "Fraunces", Georgia, serif';
-  ctx.fillText(habit.name, S / 2, 305);
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = '900 42px "Fraunces", serif';
+  ctx.fillText(habit.name.toUpperCase(), S / 2, 560);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '500 18px JetBrains Mono, monospace';
+  ctx.fillText("DON'T BREAK THE CHAIN", S / 2, 595);
 
   ctx.restore();
 
@@ -839,7 +815,17 @@ function exportCard(share = false, hi = 0) {
 
   ctx.textAlign = 'center';
 
-  ctx.fillStyle = accent;
+  const streakGrad = ctx.createLinearGradient(
+    0,
+    250,
+    0,
+    520
+  );
+
+  streakGrad.addColorStop(0, '#ffffff');
+  streakGrad.addColorStop(1, color);
+
+  ctx.fillStyle = streakGrad;
   ctx.shadowColor = accentStrong;
   ctx.shadowBlur = 30;
 
