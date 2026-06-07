@@ -411,7 +411,6 @@ function checkInToday(hi) {
     updateStats(hi);
     updateCheckinBtn(hi);
   }
-  gtag('event', 'check_in');
 }
 
 function updateCell(date, hi) {
@@ -424,6 +423,7 @@ function updateCell(date, hi) {
   if (checked.has(date)) {
     cell.classList.add('filled');
     cell.style.background = habit.color;
+    gtag('event', 'toggle_day');
   } else {
     cell.classList.remove('filled');
     cell.style.background = '';
@@ -440,7 +440,6 @@ function updateCell(date, hi) {
     chip.classList.toggle('milestone', milestone);
     chip.style.borderColor = milestone ? habit.color : '';
   }
-  gtag('event', 'toggle_day');
 }
 
 function updateStats(hi) {
@@ -622,6 +621,7 @@ function hideTooltip() {
 // ── MODAL ──
 function openModal() {
   if (habits.length >= 5) return;
+  gtag('event', 'new_habit');
   document.getElementById('color-picker').innerHTML = COLORS.map(c => `
     <div class="color-opt ${c === selectedColor ? 'selected' : ''}"
       style="background:${c}"
@@ -712,12 +712,15 @@ function saveHabit() {
   saveData();
   closeModal();
   render();
+  gtag('event', 'habit_created');
 }
 
 // ── EXPORT ──
 function exportCard(share = false, hi = 0) {
   const habit = habits[hi];
   if (!habit) return;
+
+  gtag('event', 'export_habit');
 
   const filename = `unbroken-${slugify(habit.name)}-${currentYear()}.png`;
 
@@ -950,7 +953,6 @@ function exportCard(share = false, hi = 0) {
             title: `My ${habit.name} streak`,
             files: [file]
           });
-          gtag('event', 'save_export');
           return;
         }
       } catch (e) {
@@ -963,7 +965,6 @@ function exportCard(share = false, hi = 0) {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        gtag('event', 'share_export');
         return;
       } catch (e) {}
     }
@@ -1060,7 +1061,6 @@ function checkStreakRisk() {
       const label = document.createElement('div');
       label.className = 'risk-label';
       label.id = `risk-label-${hi}`;
-      label.textContent = 'log before midnight!';
       chip.insertAdjacentElement('afterend', label);
     } else if (!isAtRisk && existingLabel) {
       existingLabel.remove();
