@@ -743,7 +743,6 @@ function exportCard(share = false, hi = 0) {
   const ctx = canvas.getContext('2d');
 
   const S = 1080;
-  const PAD = 78;
 
   canvas.width = S;
   canvas.height = S;
@@ -752,126 +751,157 @@ function exportCard(share = false, hi = 0) {
   const stats = calcStats(habit);
 
   const streak = String(stats.streak);
+
   const accent = color;
+  const accentSoft = hexToRgba(color, 0.16);
+  const accentStrong = hexToRgba(color, 0.85);
 
-  const accentSoft = hexToRgba(color, 0.14);
-  const accentMid = hexToRgba(color, 0.45);
-  const accentDeep = hexToRgba(color, 0.85);
-
-  // ── BACKGROUND ──
+  // ─────────────────────────────
+  // BACKGROUND (bold + cinematic)
+  // ─────────────────────────────
   const bg = ctx.createLinearGradient(0, 0, S, S);
-  bg.addColorStop(0, '#0a0b0e');
-  bg.addColorStop(1, '#0e1016');
+  bg.addColorStop(0, '#07080c');
+  bg.addColorStop(0.5, '#0c0f18');
+  bg.addColorStop(1, '#0a0b10');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, S, S);
 
-  // soft light bloom
-  const glow = ctx.createRadialGradient(S * 0.22, S * 0.18, 0, S * 0.22, S * 0.18, S * 0.9);
+  // strong color bloom (more “IG grab”)
+  const glow = ctx.createRadialGradient(S * 0.5, S * 0.25, 0, S * 0.5, S * 0.25, S * 0.9);
   glow.addColorStop(0, accentSoft);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, S, S);
 
-  // ── SUBTLE GRAIN (film texture) ──
+  // subtle grain (kept but lighter)
   const grain = ctx.createImageData(S, S);
   for (let i = 0; i < grain.data.length; i += 4) {
-    const v = Math.random() * 10;
+    const v = Math.random() * 8;
     grain.data[i] = grain.data[i + 1] = grain.data[i + 2] = v;
-    grain.data[i + 3] = 14;
+    grain.data[i + 3] = 10;
   }
   ctx.putImageData(grain, 0, 0);
 
-  // ── CHAIN (subtle diagonal accent) ──
+  // ─────────────────────────────
+  // HEAVY CHAIN (uniform + intentional)
+  // ─────────────────────────────
   ctx.save();
-  ctx.globalAlpha = 0.08;
-  ctx.strokeStyle = accentDeep;
-  ctx.lineWidth = 14;
+  ctx.globalAlpha = 0.14;
+  ctx.strokeStyle = hexToRgba(color, 0.9);
+  ctx.lineWidth = 18;
 
-  const cxBase = S * 0.72;
-  const cyBase = -80;
+  const startX = -120;
+  const startY = 120;
 
-  for (let i = 0; i < 6; i++) {
-    const x = cxBase + i * 70;
-    const y = cyBase + i * 120;
+  const linkW = 140;
+  const linkH = 78;
+
+  for (let i = 0; i < 10; i++) {
+    const x = startX + i * 120;
+    const y = startY + (i % 2 ? 40 : 0);
 
     ctx.beginPath();
-    ctx.ellipse(x, y, 90, 55, 0.6, 0, Math.PI * 2);
+    ctx.ellipse(x, y, linkW / 2, linkH / 2, 0.25, 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.restore();
 
-  // ── HEADER (bigger, tighter, editorial) ──
+  // ─────────────────────────────
+  // HERO TITLE (BIG + CENTERED ENERGY)
+  // ─────────────────────────────
   ctx.save();
 
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font = '500 20px JetBrains Mono, monospace';
-  ctx.fillText('UNBROKEN', PAD, PAD);
+  ctx.textAlign = 'center';
 
-  // BIG TITLE (Fraunces)
-  ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  ctx.font = '900 72px "Fraunces", Georgia, serif';
-  ctx.fillText(habit.name, PAD, PAD + 84);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '600 22px JetBrains Mono, monospace';
+  ctx.fillText('UNBROKEN', S / 2, 140);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = accentStrong;
+  ctx.shadowBlur = 40;
+
+  ctx.font = '900 110px Inter, system-ui, sans-serif';
+  ctx.fillText('UNBROKEN', S / 2, 255);
+
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '500 34px "Fraunces", Georgia, serif';
+  ctx.fillText(habit.name, S / 2, 305);
 
   ctx.restore();
 
-  // ── STREAK HERO (pulled up, tighter spacing) ──
+  // ─────────────────────────────
+  // STREAK HERO (centered anchor)
+  // ─────────────────────────────
   ctx.save();
-  ctx.fillStyle = accent;
-  ctx.shadowColor = accentMid;
-  ctx.shadowBlur = 26;
 
-  const size = streak.length > 3 ? 210 : streak.length > 2 ? 240 : 270;
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accentStrong;
+  ctx.shadowBlur = 30;
+
+  const size = streak.length > 3 ? 220 : 260;
 
   ctx.font = `900 ${size}px Inter, system-ui, sans-serif`;
-  ctx.fillText(streak, PAD, 380);
+  ctx.fillText(streak, S / 2, 470);
 
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = '500 22px JetBrains Mono, monospace';
-  ctx.fillText('DAY STREAK', PAD + 6, 412);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.font = '400 16px JetBrains Mono, monospace';
-  ctx.fillText('keep the chain alive', PAD + 6, 438);
+  ctx.font = '500 24px JetBrains Mono, monospace';
+  ctx.fillText('DAY STREAK', S / 2, 510);
 
   ctx.restore();
 
-  // ── STATS (slightly higher, tighter layout) ──
+  // ─────────────────────────────
+  // STATS STRIP (centered, not left heavy)
+  // ─────────────────────────────
   const chips = [
     `${stats.longest} BEST`,
     `${stats.total} TOTAL`,
     `${stats.rate}% RATE`
   ];
 
-  let x = PAD;
-  const y = 470;
+  ctx.font = '500 18px JetBrains Mono, monospace';
 
-  ctx.font = '500 17px JetBrains Mono, monospace';
+  let totalW = 0;
+  const widths = chips.map(c => ctx.measureText(c).width + 40);
+  totalW = widths.reduce((a, b) => a + b, 0) + 24 * (chips.length - 1);
 
-  for (const c of chips) {
-    const w = ctx.measureText(c).width + 32;
+  let x = (S - totalW) / 2;
+  const y = 560;
+
+  chips.forEach((c, i) => {
+    const w = widths[i];
 
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
     ctx.beginPath();
-    ctx.roundRect(x, y, w, 34, 14);
+    ctx.roundRect(x, y, w, 38, 16);
     ctx.fill();
 
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
-    ctx.fillText(c, x + 14, y + 23);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(c, x + 18, y + 25);
 
-    x += w + 12;
-  }
+    x += w + 24;
+  });
 
-  // ── GRID (moved up, slightly denser feel) ──
+  // ─────────────────────────────
+  // GRID (bottom anchored, denser feel)
+  // ─────────────────────────────
   const CELL = 34, GAP = 6, ROWS = 7, COLS = 16;
   const step = CELL + GAP;
 
-  const gridX = PAD;
-  const gridY = 560;
+  const gridW = COLS * step - GAP;
+  const gridH = ROWS * step - GAP;
+
+  const gridX = (S - gridW) / 2;
+  const gridY = 640;
 
   const today = todayStr();
   const checked = new Set(habit.checked || []);
@@ -897,42 +927,34 @@ function exportCard(share = false, hi = 0) {
 
       const isFilled = checked.has(ds);
       const isFuture = ds > today;
-      const isToday = ds === today;
 
       ctx.fillStyle = isFilled
         ? hexToRgba(color, 0.55)
         : isFuture
           ? 'rgba(255,255,255,0.03)'
-          : 'rgba(255,255,255,0.07)';
+          : 'rgba(255,255,255,0.08)';
 
       ctx.beginPath();
       ctx.roundRect(cx, cy, CELL, CELL, 7);
       ctx.fill();
-
-      // TODAY: no box — just a soft accent dot
-      if (isToday) {
-        ctx.fillStyle = accentDeep;
-        ctx.globalAlpha = 0.9;
-        ctx.beginPath();
-        ctx.arc(cx + CELL / 2, cy + CELL / 2, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-      }
     }
   }
 
-  // ── FOOTER ──
+  // ─────────────────────────────
+  // FOOTER (minimal + centered balance)
+  // ─────────────────────────────
   ctx.save();
+  ctx.textAlign = 'center';
+
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.font = '400 18px JetBrains Mono, monospace';
-  ctx.fillText('unbroken.fyi', PAD, S - 70);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.fillText(`saved ${currentYear()}`, PAD, S - 40);
+  ctx.fillText('unbroken.fyi', S / 2, 1020);
 
   ctx.restore();
 
-  // ── EXPORT ──
+  // ─────────────────────────────
+  // EXPORT
+  // ─────────────────────────────
   canvas.toBlob(async (blob) => {
     if (share && navigator.share && navigator.canShare) {
       try {
