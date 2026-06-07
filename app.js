@@ -161,46 +161,26 @@ function getAudioCtx() {
   return audioCtx;
 }
 
+const chainSound = new Audio('chain.mp3');
+const milestoneSound = new Audio('milestone-chime.mp3');
+chainSound.preload = 'auto';
+chainSound.volume = 0.4;
+milestoneSound.volume = 0.6;
+
 function playChainSound(milestone = false) {
-  try {
-    const ctx = getAudioCtx();
-    const now = ctx.currentTime;
+  const sfx = chainSound.cloneNode();
+  sfx.play().catch(() => {});
 
-    // Metallic click base
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
+  if (milestone) {
+    const extra = milestoneSound.cloneNode();
 
-    osc1.type = 'square';
-    osc1.frequency.setValueAtTime(milestone ? 880 : 660, now);
-    osc1.frequency.exponentialRampToValueAtTime(milestone ? 440 : 220, now + 0.15);
-
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(milestone ? 1320 : 990, now);
-    osc2.frequency.exponentialRampToValueAtTime(milestone ? 660 : 440, now + 0.12);
-
-    filter.type = 'bandpass';
-    filter.frequency.value = milestone ? 1200 : 800;
-    filter.Q.value = 2;
-
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(milestone ? 0.18 : 0.12, now + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, now + (milestone ? 0.4 : 0.25));
-
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    osc1.start(now);
-    osc2.start(now);
-    osc1.stop(now + 0.4);
-    osc2.stop(now + 0.4);
-  } catch(e) {
-    // audio not supported, silently skip
+    // slight delay makes it feel “earned”
+    setTimeout(() => {
+      extra.play().catch(() => {});
+    }, 80);
   }
 }
+
 
 // ── STREAK CHIPS ──
 const MILESTONES = [7, 14, 30, 50, 100, 200, 365];

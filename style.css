@@ -1120,10 +1120,22 @@ main {
   letter-spacing: 0.08em;
 }
 
+.btn-checkin.logged,
+.btn-checkin.unlogged {
+  border-width: 1px;
+  box-sizing: border-box;
+}
+
+.btn-checkin.logged:hover,
+.btn-checkin.unlogged:hover {
+  border-width: 1px;
+}
+
 .btn-checkin.unlogged {
   position: relative;
   overflow: hidden;
-  outline: 1px solid var(--habit-color);
+  border: 1px solid var(--habit-color);
+  outline: none;
 }
 
 .btn-checkin.unlogged:hover {
