@@ -743,151 +743,109 @@ function exportCard(share = false, hi = 0) {
   const ctx = canvas.getContext('2d');
 
   const S = 1080;
-
   canvas.width = S;
   canvas.height = S;
 
   const color = habit.color;
   const stats = calcStats(habit);
-
   const streak = String(stats.streak);
 
-  const accent = color;
-  const accentSoft = hexToRgba(color, 0.16);
-  const accentStrong = hexToRgba(color, 0.85);
+  const accentSoft = hexToRgba(color, 0.10);
+  const accentLine = hexToRgba(color, 0.35);
 
   // ─────────────────────────────
-  // BACKGROUND (bold + cinematic)
+  // BACKGROUND (aligned with CSS system)
   // ─────────────────────────────
-  const bg = ctx.createLinearGradient(0, 0, S, S);
-  bg.addColorStop(0, '#07080c');
-  bg.addColorStop(0.5, '#0c0f18');
-  bg.addColorStop(1, '#0a0b10');
+  const bg = ctx.createLinearGradient(0, 0, 0, S);
+  bg.addColorStop(0, '#0e0e0e');
+  bg.addColorStop(1, '#161616');
+
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, S, S);
 
-  // strong color bloom (more “IG grab”)
-  const glow = ctx.createRadialGradient(S * 0.5, S * 0.25, 0, S * 0.5, S * 0.25, S * 0.9);
+  // subtle radial tint (very restrained, like site glow)
+  const glow = ctx.createRadialGradient(S / 2, S * 0.3, 0, S / 2, S * 0.3, S * 0.9);
   glow.addColorStop(0, accentSoft);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
+
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, S, S);
 
-  // subtle grain (kept but lighter)
+  // grain (match CSS intensity)
   const grain = ctx.createImageData(S, S);
   for (let i = 0; i < grain.data.length; i += 4) {
-    const v = Math.random() * 8;
+    const v = Math.random() * 6;
     grain.data[i] = grain.data[i + 1] = grain.data[i + 2] = v;
-    grain.data[i + 3] = 10;
+    grain.data[i + 3] = 6;
   }
   ctx.putImageData(grain, 0, 0);
 
-  // ─────────────────────────────
-  // HERO TITLE (BIG + CENTERED ENERGY)
-  // ─────────────────────────────
-  ctx.save();
+  // subtle border frame (like site cards)
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(32.5, 32.5, S - 65, S - 65);
 
+  // ─────────────────────────────
+  // HEADER (clean, centered, editorial)
+  // ─────────────────────────────
   ctx.textAlign = 'center';
+
+  ctx.fillStyle = '#f2f2f2';
+  ctx.font = '700 120px Fraunces, serif';
+  ctx.fillText('UNBROKEN', S / 2, 170);
+
+  // subtle divider line
+  ctx.fillStyle = accentLine;
+  ctx.fillRect(S / 2 - 60, 205, 120, 1);
+
+  // ─────────────────────────────
+  // STREAK (primary metric)
+  // ─────────────────────────────
+  const streakSize = streak.length > 3 ? 210 : 250;
 
   ctx.fillStyle = '#ffffff';
-  ctx.shadowColor = accentStrong;
-  ctx.shadowBlur = 40;
-
-  ctx.font = '900 110px Inter, system-ui, sans-serif';
-  ctx.fillText('UNBROKEN', S / 2, 190);
-
-  ctx.shadowBlur = 0;
-
-  ctx.fillStyle = 'rgba(255,255,255,0.88)';
-  ctx.font = '900 42px "Fraunces", serif';
-  ctx.fillText(habit.name.toUpperCase(), S / 2, 560);
+  ctx.font = `900 ${streakSize}px JetBrains Mono, monospace`;
+  ctx.fillText(streak, S / 2, 410);
 
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = '500 18px JetBrains Mono, monospace';
-  ctx.fillText("DON'T BREAK THE CHAIN", S / 2, 595);
-
-  ctx.restore();
+  ctx.font = '500 22px JetBrains Mono, monospace';
+  ctx.fillText('DAY STREAK', S / 2, 450);
 
   // ─────────────────────────────
-  // STREAK HERO (centered anchor)
+  // HABIT NAME
   // ─────────────────────────────
-  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = '600 54px Fraunces, serif';
+  ctx.fillText(habit.name.toUpperCase(), S / 2, 520);
 
-  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '400 16px JetBrains Mono, monospace';
+  ctx.fillText("DON'T BREAK THE CHAIN", S / 2, 552);
 
-  const streakGrad = ctx.createLinearGradient(
-    0,
-    250,
-    0,
-    520
+  // ─────────────────────────────
+  // STATS (minimal system line, not UI chips)
+  // ─────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = '500 16px JetBrains Mono, monospace';
+  ctx.fillText(
+    `BEST ${stats.longest}   ·   TOTAL ${stats.total}   ·   RATE ${stats.rate}%`,
+    S / 2,
+    585
   );
 
-  streakGrad.addColorStop(0, '#ffffff');
-  streakGrad.addColorStop(1, color);
-
-  ctx.fillStyle = streakGrad;
-  ctx.shadowColor = accentStrong;
-  ctx.shadowBlur = 30;
-
-  const size = streak.length > 3 ? 220 : 260;
-
-  ctx.font = `900 ${size}px Inter, system-ui, sans-serif`;
-  ctx.fillText(streak, S / 2, 470);
-
-  ctx.shadowBlur = 0;
-
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = '500 24px JetBrains Mono, monospace';
-  ctx.fillText('DAY STREAK', S / 2, 510);
-
-  ctx.restore();
-
   // ─────────────────────────────
-  // STATS STRIP (centered, not left heavy)
+  // GRID (visual anchor, heavier presence)
   // ─────────────────────────────
-  const chips = [
-    `${stats.longest} BEST`,
-    `${stats.total} TOTAL`,
-    `${stats.rate}% RATE`
-  ];
+  const CELL = 38;
+  const GAP = 6;
+  const ROWS = 7;
+  const COLS = 16;
 
-  ctx.font = '500 18px JetBrains Mono, monospace';
-
-  let totalW = 0;
-  const widths = chips.map(c => ctx.measureText(c).width + 40);
-  totalW = widths.reduce((a, b) => a + b, 0) + 24 * (chips.length - 1);
-
-  let x = (S - totalW) / 2;
-  const y = 560;
-
-  chips.forEach((c, i) => {
-    const w = widths[i];
-
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, 38, 16);
-    ctx.fill();
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText(c, x + 18, y + 25);
-
-    x += w + 24;
-  });
-
-  // ─────────────────────────────
-  // GRID (bottom anchored, denser feel)
-  // ─────────────────────────────
-  const CELL = 34, GAP = 6, ROWS = 7, COLS = 16;
   const step = CELL + GAP;
-
   const gridW = COLS * step - GAP;
-  const gridH = ROWS * step - GAP;
 
   const gridX = (S - gridW) / 2;
-  const gridY = 640;
+  const gridY = 650;
 
   const today = todayStr();
   const checked = new Set(habit.checked || []);
@@ -903,7 +861,6 @@ function exportCard(share = false, hi = 0) {
 
   for (let col = 0; col < COLS; col++) {
     for (let row = 0; row < ROWS; row++) {
-
       const d = new Date(startDate);
       d.setDate(d.getDate() + col * 7 + row);
 
@@ -915,28 +872,36 @@ function exportCard(share = false, hi = 0) {
       const isFuture = ds > today;
 
       ctx.fillStyle = isFilled
-        ? hexToRgba(color, 0.55)
+        ? hexToRgba(color, 0.65)
         : isFuture
           ? 'rgba(255,255,255,0.03)'
           : 'rgba(255,255,255,0.08)';
 
       ctx.beginPath();
-      ctx.roundRect(cx, cy, CELL, CELL, 7);
+      ctx.roundRect(cx, cy, CELL, CELL, 6);
       ctx.fill();
     }
   }
 
   // ─────────────────────────────
-  // FOOTER (minimal + centered balance)
+  // FOOTER (match site identity)
   // ─────────────────────────────
-  ctx.save();
-  ctx.textAlign = 'center';
+  ctx.textAlign = 'left';
 
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = '400 18px JetBrains Mono, monospace';
-  ctx.fillText('unbroken.fyi', S / 2, 1020);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '700 22px Fraunces, serif';
+  ctx.fillText('Un', 70, 1020);
 
-  ctx.restore();
+  const w = ctx.measureText('Un').width;
+
+  ctx.font = '300 italic 22px Fraunces, serif';
+  ctx.fillText('broken', 70 + w - 2, 1020);
+
+  ctx.textAlign = 'right';
+
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '400 16px JetBrains Mono, monospace';
+  ctx.fillText(`${currentYear()}`, S - 70, 1020);
 
   // ─────────────────────────────
   // EXPORT
