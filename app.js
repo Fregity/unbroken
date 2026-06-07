@@ -411,6 +411,7 @@ function checkInToday(hi) {
     updateStats(hi);
     updateCheckinBtn(hi);
   }
+  gtag('event', 'check_in');
 }
 
 function updateCell(date, hi) {
@@ -439,6 +440,7 @@ function updateCell(date, hi) {
     chip.classList.toggle('milestone', milestone);
     chip.style.borderColor = milestone ? habit.color : '';
   }
+  gtag('event', 'toggle_day');
 }
 
 function updateStats(hi) {
@@ -948,6 +950,7 @@ function exportCard(share = false, hi = 0) {
             title: `My ${habit.name} streak`,
             files: [file]
           });
+          gtag('event', 'save_export');
           return;
         }
       } catch (e) {
@@ -960,6 +963,7 @@ function exportCard(share = false, hi = 0) {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
+        gtag('event', 'share_export');
         return;
       } catch (e) {}
     }
