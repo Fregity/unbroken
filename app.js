@@ -736,246 +736,188 @@ function saveHabit() {
 function exportCard(share = false, hi = 0) {
   const habit = habits[hi];
   if (!habit) return;
+
   const filename = `unbroken-${slugify(habit.name)}-${currentYear()}.png`;
 
   const canvas = document.getElementById('export-canvas');
-  const ctx    = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
 
-  const S   = 1080;
-  const PAD = 72;
-  canvas.width  = S;
+  const S = 1080;
+  const PAD = 80;
+
+  canvas.width = S;
   canvas.height = S;
 
   const color = habit.color;
   const stats = calcStats(habit);
-  const streakStr = String(stats.streak);
-  const streakSize = streakStr.length > 3 ? 176 : streakStr.length > 2 ? 194 : 228;
-  const accentSoft = hexToRgba(color, 0.22);
-  const accentMid = hexToRgba(color, 0.58);
-  const accentDeep = hexToRgba(color, 0.92);
 
+  const streak = String(stats.streak);
+  const accent = color;
+  const accentSoft = hexToRgba(color, 0.18);
+  const accentMid = hexToRgba(color, 0.45);
+
+  // ── BACKGROUND (clean + modern depth) ──
   const bg = ctx.createLinearGradient(0, 0, S, S);
-  bg.addColorStop(0, '#070707');
-  bg.addColorStop(0.48, '#0d0e11');
-  bg.addColorStop(1, '#101114');
+  bg.addColorStop(0, '#0b0c0f');
+  bg.addColorStop(1, '#0f1116');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, S, S);
 
-  const glowA = ctx.createRadialGradient(S * 0.18, S * 0.18, 0, S * 0.18, S * 0.18, S * 0.95);
-  glowA.addColorStop(0, accentSoft);
-  glowA.addColorStop(0.4, 'rgba(0,0,0,0)');
-  ctx.fillStyle = glowA;
+  // subtle corner light (remove heavy glow noise)
+  const glow = ctx.createRadialGradient(S * 0.2, S * 0.2, 0, S * 0.2, S * 0.2, S * 0.9);
+  glow.addColorStop(0, accentSoft);
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
   ctx.fillRect(0, 0, S, S);
 
-  const glowB = ctx.createRadialGradient(S * 0.78, S * 0.24, 0, S * 0.78, S * 0.24, S * 0.68);
-  glowB.addColorStop(0, hexToRgba(color, 0.12));
-  glowB.addColorStop(0.55, 'rgba(0,0,0,0)');
-  ctx.fillStyle = glowB;
-  ctx.fillRect(0, 0, S, S);
-
-  const grain = ctx.createImageData(S, S);
-  for (let i = 0; i < grain.data.length; i += 4) {
-    const v = Math.random() * 14;
-    grain.data[i] = grain.data[i + 1] = grain.data[i + 2] = v;
-    grain.data[i + 3] = 16;
-  }
-  ctx.putImageData(grain, 0, 0);
-
+  // ── HEADER ──
   ctx.save();
-  ctx.strokeStyle = hexToRgba(color, 0.26);
-  ctx.lineWidth = 1;
-  ctx.strokeRect(26.5, 26.5, S - 53, S - 53);
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.strokeRect(56.5, 56.5, S - 113, S - 113);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '500 20px JetBrains Mono, monospace';
+  ctx.fillText('UNBROKEN', PAD, PAD);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.font = '700 44px Inter, system-ui, sans-serif';
+  ctx.fillText(habit.name, PAD, PAD + 56);
   ctx.restore();
 
+  // ── HERO STREAK (dominant focal point) ──
   ctx.save();
-  ctx.globalAlpha = 0.08;
-  ctx.strokeStyle = accentDeep;
-  ctx.lineWidth = 20;
-  ctx.lineCap = 'round';
-  const linkW = 146, linkH = 86;
-  const chainX = S - 194, chainY = S - 244;
-  for (let i = 0; i < 5; i++) {
-    const cx = chainX - i * (linkW * 0.58);
-    const cy = chainY + (i % 2 === 0 ? 0 : linkH * 0.44);
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, linkW / 2, linkH / 2, i * 0.22, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 10;
-  for (let i = 0; i < 6; i++) {
-    const cx = 158 + i * 52;
-    const cy = 138 + (i % 2 === 0 ? 0 : 20);
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, 32, 18, -0.18 + i * 0.03, 0, Math.PI * 2);
-    ctx.stroke();
-  }
+  ctx.fillStyle = accent;
+  ctx.shadowColor = accentMid;
+  ctx.shadowBlur = 30;
+
+  const size = streak.length > 3 ? 200 : streak.length > 2 ? 230 : 260;
+
+  ctx.font = `900 ${size}px Inter, system-ui, sans-serif`;
+  ctx.fillText(streak, PAD, 420);
+
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '500 26px JetBrains Mono, monospace';
+  ctx.fillText('DAY STREAK', PAD + 6, 460);
   ctx.restore();
 
-  const CELL = 38, GAP = 7, ROWS = 7, COLS = 16;
-  const step  = CELL + GAP;
+  // ── STATS ROW (clean chips instead of raw text dump) ──
+  const chips = [
+    `${stats.longest} BEST`,
+    `${stats.total} TOTAL`,
+    `${stats.rate}% RATE`
+  ];
+
+  let chipX = PAD;
+  const chipY = 520;
+
+  ctx.font = '500 18px JetBrains Mono, monospace';
+
+  chips.forEach(txt => {
+    const w = ctx.measureText(txt).width + 34;
+
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath();
+    ctx.roundRect(chipX, chipY, w, 36, 14);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText(txt, chipX + 16, chipY + 24);
+
+    chipX += w + 14;
+  });
+
+  // ── GRID (simplified, softer, less “neon spreadsheet”) ──
+  const CELL = 34, GAP = 6, ROWS = 7, COLS = 16;
+  const step = CELL + GAP;
+
   const gridW = COLS * step - GAP;
   const gridH = ROWS * step - GAP;
-  const gridX = (S - gridW) / 2;
-  const gridY = S - PAD - gridH - 38;
+
+  const gridX = PAD;
+  const gridY = 620;
 
   const today = todayStr();
   const checked = new Set(habit.checked || []);
+
   const todayDate = new Date();
   const dayOfWeek = todayDate.getDay();
+
   const endDate = new Date(todayDate);
   endDate.setDate(endDate.getDate() - dayOfWeek + 6);
+
   const startDate = new Date(endDate);
   startDate.setDate(startDate.getDate() - (COLS * 7) + 1);
 
   for (let col = 0; col < COLS; col++) {
     for (let row = 0; row < ROWS; row++) {
+
       const d = new Date(startDate);
       d.setDate(d.getDate() + col * 7 + row);
+
       const ds = fmtDate(d);
       const cx = gridX + col * step;
       const cy = gridY + row * step;
-      const isFuture = ds > today;
+
       const isFilled = checked.has(ds);
+      const isFuture = ds > today;
       const isToday = ds === today;
 
-      ctx.fillStyle = isFilled ? accentMid : isFuture ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.06)';
+      ctx.fillStyle = isFilled
+        ? hexToRgba(color, 0.65)
+        : isFuture
+          ? 'rgba(255,255,255,0.03)'
+          : 'rgba(255,255,255,0.07)';
+
       ctx.beginPath();
-      ctx.roundRect(cx, cy, CELL, CELL, 6);
+      ctx.roundRect(cx, cy, CELL, CELL, 7);
       ctx.fill();
 
-      if (isFilled) {
-        ctx.save();
-        const cellGlow = ctx.createLinearGradient(cx, cy, cx + CELL, cy + CELL);
-        cellGlow.addColorStop(0, hexToRgba(color, 0.85));
-        cellGlow.addColorStop(1, hexToRgba(color, 0.45));
-        ctx.fillStyle = cellGlow;
-        ctx.globalAlpha = 0.55;
-        ctx.beginPath();
-        ctx.roundRect(cx + 1, cy + 1, CELL - 2, CELL - 2, 5);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(cx + 0.5, cy + 0.5, CELL - 1, CELL - 1, 6);
-      ctx.stroke();
-      ctx.restore();
-
       if (isToday) {
-        ctx.strokeStyle = accentDeep;
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.roundRect(cx - 1, cy - 1, CELL + 2, CELL + 2, 7);
-        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 1, cy - 1, CELL + 2, CELL + 2);
       }
     }
   }
 
+  // ── FOOTER (minimal branding) ──
   ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.82)';
-  ctx.font = '500 22px "JetBrains Mono", monospace';
-  ctx.fillText('UNBROKEN', PAD, 112);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '400 18px JetBrains Mono, monospace';
+  ctx.fillText('unbroken.fyi', PAD, S - 70);
 
-  ctx.fillStyle = '#eaeaea';
-  ctx.font = '700 42px Georgia, serif';
-  ctx.fillText(habit.name.toUpperCase(), PAD, 164);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.28)';
-  ctx.font = '400 22px "JetBrains Mono", monospace';
-  ctx.fillText(`${stats.longest} BEST  �  ${stats.total} TOTAL  �  ${stats.rate}% RATE`, PAD, 200);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillText(`saved ${currentYear()}`, PAD, S - 40);
   ctx.restore();
 
-  ctx.save();
-  ctx.shadowColor = hexToRgba(color, 0.28);
-  ctx.shadowBlur = 28;
-  ctx.fillStyle = color;
-  ctx.font = `900 ${streakSize}px Georgia, serif`;
-  ctx.fillText(streakStr, PAD, 356);
-  ctx.shadowBlur = 0;
-
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.font = '500 28px "JetBrains Mono", monospace';
-  ctx.fillText('DAY STREAK', PAD + 6, 390);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.42)';
-  ctx.font = '400 18px "JetBrains Mono", monospace';
-  ctx.fillText('KEEP THE CHAIN INTACT', PAD + 6, 424);
-  ctx.restore();
-
-  ctx.save();
-  ctx.fillStyle = hexToRgba(color, 0.12);
-  roundRect(ctx, S - 262, 120, 180, 64, 18);
-  ctx.fill();
-  ctx.strokeStyle = hexToRgba(color, 0.4);
-  ctx.lineWidth = 1;
-  roundRect(ctx, S - 262, 120, 180, 64, 18);
-  ctx.stroke();
-  ctx.fillStyle = accentDeep;
-  ctx.font = '700 17px "JetBrains Mono", monospace';
-  ctx.fillText('YEAR IN PIXELS', S - 238, 159);
-  ctx.restore();
-
-  ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD, S - 132);
-  ctx.lineTo(S - PAD, S - 132);
-  ctx.stroke();
-
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  ctx.font = '700 24px Georgia, serif';
-  ctx.fillText('Un', PAD, S - 86);
-  const unW = ctx.measureText('Un').width;
-  ctx.font = '300 italic 24px Georgia, serif';
-  ctx.fillStyle = 'rgba(255,255,255,0.24)';
-  ctx.fillText('broken', PAD + unW - 1, S - 86);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.font = '400 20px "JetBrains Mono", monospace';
-  ctx.textAlign = 'right';
-  ctx.fillText('unbroken.fyi', S - PAD, S - 86);
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.font = '400 16px "JetBrains Mono", monospace';
-  ctx.fillText(`saved ${currentYear()}`, S - PAD, S - 48);
-  ctx.textAlign = 'left';
-  ctx.restore();
-
+  // ── EXPORT ──
   canvas.toBlob(async (blob) => {
     if (share && navigator.share && navigator.canShare) {
       try {
         const file = new File([blob], filename, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `My ${habit.name} streak � Unbroken`,
+            title: `My ${habit.name} streak`,
             files: [file]
           });
           return;
         }
-      } catch(e) {
+      } catch (e) {
         if (e.name === 'AbortError') return;
       }
     }
+
     if (share) {
       try {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        const btn = document.querySelector('.btn-export:not(.secondary)');
-        if (btn) {
-          const orig = btn.textContent;
-          btn.textContent = 'COPIED ?';
-          setTimeout(() => btn.textContent = orig, 2000);
-        }
         return;
-      } catch(e) {}
+      } catch (e) {}
     }
+
     const link = document.createElement('a');
     link.download = filename;
     link.href = URL.createObjectURL(blob);
