@@ -743,7 +743,7 @@ function exportCard(share = false, hi = 0) {
   const ctx = canvas.getContext('2d');
 
   const S = 1080;
-  const PAD = 80;
+  const PAD = 78;
 
   canvas.width = S;
   canvas.height = S;
@@ -753,90 +753,125 @@ function exportCard(share = false, hi = 0) {
 
   const streak = String(stats.streak);
   const accent = color;
-  const accentSoft = hexToRgba(color, 0.18);
-  const accentMid = hexToRgba(color, 0.45);
 
-  // ── BACKGROUND (clean + modern depth) ──
+  const accentSoft = hexToRgba(color, 0.14);
+  const accentMid = hexToRgba(color, 0.45);
+  const accentDeep = hexToRgba(color, 0.85);
+
+  // ── BACKGROUND ──
   const bg = ctx.createLinearGradient(0, 0, S, S);
-  bg.addColorStop(0, '#0b0c0f');
-  bg.addColorStop(1, '#0f1116');
+  bg.addColorStop(0, '#0a0b0e');
+  bg.addColorStop(1, '#0e1016');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, S, S);
 
-  // subtle corner light (remove heavy glow noise)
-  const glow = ctx.createRadialGradient(S * 0.2, S * 0.2, 0, S * 0.2, S * 0.2, S * 0.9);
+  // soft light bloom
+  const glow = ctx.createRadialGradient(S * 0.22, S * 0.18, 0, S * 0.22, S * 0.18, S * 0.9);
   glow.addColorStop(0, accentSoft);
   glow.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, S, S);
 
-  // ── HEADER ──
+  // ── SUBTLE GRAIN (film texture) ──
+  const grain = ctx.createImageData(S, S);
+  for (let i = 0; i < grain.data.length; i += 4) {
+    const v = Math.random() * 10;
+    grain.data[i] = grain.data[i + 1] = grain.data[i + 2] = v;
+    grain.data[i + 3] = 14;
+  }
+  ctx.putImageData(grain, 0, 0);
+
+  // ── CHAIN (subtle diagonal accent) ──
   ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = accentDeep;
+  ctx.lineWidth = 14;
+
+  const cxBase = S * 0.72;
+  const cyBase = -80;
+
+  for (let i = 0; i < 6; i++) {
+    const x = cxBase + i * 70;
+    const y = cyBase + i * 120;
+
+    ctx.beginPath();
+    ctx.ellipse(x, y, 90, 55, 0.6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // ── HEADER (bigger, tighter, editorial) ──
+  ctx.save();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.font = '500 20px JetBrains Mono, monospace';
   ctx.fillText('UNBROKEN', PAD, PAD);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.font = '700 44px Inter, system-ui, sans-serif';
-  ctx.fillText(habit.name, PAD, PAD + 56);
+  // BIG TITLE (Fraunces)
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.font = '900 72px "Fraunces", Georgia, serif';
+  ctx.fillText(habit.name, PAD, PAD + 84);
+
   ctx.restore();
 
-  // ── HERO STREAK (dominant focal point) ──
+  // ── STREAK HERO (pulled up, tighter spacing) ──
   ctx.save();
   ctx.fillStyle = accent;
   ctx.shadowColor = accentMid;
-  ctx.shadowBlur = 30;
+  ctx.shadowBlur = 26;
 
-  const size = streak.length > 3 ? 200 : streak.length > 2 ? 230 : 260;
+  const size = streak.length > 3 ? 210 : streak.length > 2 ? 240 : 270;
 
   ctx.font = `900 ${size}px Inter, system-ui, sans-serif`;
-  ctx.fillText(streak, PAD, 420);
+  ctx.fillText(streak, PAD, 380);
 
   ctx.shadowBlur = 0;
 
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.font = '500 26px JetBrains Mono, monospace';
-  ctx.fillText('DAY STREAK', PAD + 6, 460);
+  ctx.font = '500 22px JetBrains Mono, monospace';
+  ctx.fillText('DAY STREAK', PAD + 6, 412);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.font = '400 16px JetBrains Mono, monospace';
+  ctx.fillText('keep the chain alive', PAD + 6, 438);
+
   ctx.restore();
 
-  // ── STATS ROW (clean chips instead of raw text dump) ──
+  // ── STATS (slightly higher, tighter layout) ──
   const chips = [
     `${stats.longest} BEST`,
     `${stats.total} TOTAL`,
     `${stats.rate}% RATE`
   ];
 
-  let chipX = PAD;
-  const chipY = 520;
+  let x = PAD;
+  const y = 470;
 
-  ctx.font = '500 18px JetBrains Mono, monospace';
+  ctx.font = '500 17px JetBrains Mono, monospace';
 
-  chips.forEach(txt => {
-    const w = ctx.measureText(txt).width + 34;
+  for (const c of chips) {
+    const w = ctx.measureText(c).width + 32;
 
     ctx.fillStyle = 'rgba(255,255,255,0.06)';
     ctx.beginPath();
-    ctx.roundRect(chipX, chipY, w, 36, 14);
+    ctx.roundRect(x, y, w, 34, 14);
     ctx.fill();
 
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText(txt, chipX + 16, chipY + 24);
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.fillText(c, x + 14, y + 23);
 
-    chipX += w + 14;
-  });
+    x += w + 12;
+  }
 
-  // ── GRID (simplified, softer, less “neon spreadsheet”) ──
+  // ── GRID (moved up, slightly denser feel) ──
   const CELL = 34, GAP = 6, ROWS = 7, COLS = 16;
   const step = CELL + GAP;
 
-  const gridW = COLS * step - GAP;
-  const gridH = ROWS * step - GAP;
-
   const gridX = PAD;
-  const gridY = 620;
+  const gridY = 560;
 
   const today = todayStr();
   const checked = new Set(habit.checked || []);
@@ -865,7 +900,7 @@ function exportCard(share = false, hi = 0) {
       const isToday = ds === today;
 
       ctx.fillStyle = isFilled
-        ? hexToRgba(color, 0.65)
+        ? hexToRgba(color, 0.55)
         : isFuture
           ? 'rgba(255,255,255,0.03)'
           : 'rgba(255,255,255,0.07)';
@@ -874,15 +909,19 @@ function exportCard(share = false, hi = 0) {
       ctx.roundRect(cx, cy, CELL, CELL, 7);
       ctx.fill();
 
+      // TODAY: no box — just a soft accent dot
       if (isToday) {
-        ctx.strokeStyle = accent;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - 1, cy - 1, CELL + 2, CELL + 2);
+        ctx.fillStyle = accentDeep;
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(cx + CELL / 2, cy + CELL / 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
     }
   }
 
-  // ── FOOTER (minimal branding) ──
+  // ── FOOTER ──
   ctx.save();
   ctx.fillStyle = 'rgba(255,255,255,0.35)';
   ctx.font = '400 18px JetBrains Mono, monospace';
@@ -890,6 +929,7 @@ function exportCard(share = false, hi = 0) {
 
   ctx.fillStyle = 'rgba(255,255,255,0.2)';
   ctx.fillText(`saved ${currentYear()}`, PAD, S - 40);
+
   ctx.restore();
 
   // ── EXPORT ──
