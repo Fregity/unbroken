@@ -1135,27 +1135,26 @@ function showInstallHint() {
   bar.dataset.original = bar.innerHTML;
   bar.dataset.installActive = "true";
 
+  bar.classList.add('install-state');
+
   bar.innerHTML = `
     <div style="
       width: 100%;
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 400;
-      color: var(--text);
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-top: 10px;
+      color: var(--text);
+      cursor: pointer;
     ">
       // CLICK HERE TO INSTALL UNBROKEN
       <div style="
-        font-size: 12px;
-        opacity: 0.4;
-        margin-top: 12px;
-        margin-bottom: 10px;
-        font-weight: 400;
+        font-size: 11px;
+        opacity: 0.5;
+        margin-top: 6px;
         letter-spacing: 0.1em;
-        text-transform: uppercase;
       ">
         ON YOUR HOMESCREEN · OFFLINE ACCESS
       </div>
@@ -1172,7 +1171,7 @@ function showInstallHint() {
     restoreFooter();
   };
 
-  setTimeout(restoreFooter, 8000);
+  setTimeout(restoreFooter, 12000);
 }
 
 function restoreFooter() {
@@ -1180,6 +1179,8 @@ function restoreFooter() {
   if (!bar || !bar.dataset.original) return;
 
   bar.innerHTML = bar.dataset.original;
+
+  bar.classList.remove('install-state');
   bar.dataset.installActive = "";
 
   bar.onclick = null;
