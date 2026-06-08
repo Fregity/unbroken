@@ -1147,14 +1147,14 @@ function showInstallHint() {
 
   bar.onclick = async () => {
     if (!deferredPrompt) {
-      bar.innerHTML = `<div style="padding:14px;text-align:center;font-size:12px;opacity:0.7;">
-        Use browser menu → Add to Home Screen
-      </div>`;
+      bar.style.opacity = '0';
+      setTimeout(() => bar.remove(), 200);
       return;
     }
 
     deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const result = await deferredPrompt.userChoice;
+
     deferredPrompt = null;
 
     restoreFooter();
