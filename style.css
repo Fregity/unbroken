@@ -411,15 +411,6 @@ main {
   z-index: 100;
 }
 
-#export-bar.install-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 64px;              /* locks visual height */
-  padding: 0 48px;           /* overrides vertical padding behavior */
-  flex-wrap: nowrap;
-}
-
 .export-label {
   font-size: 11px;
   color: var(--muted);
