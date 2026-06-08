@@ -1117,46 +1117,41 @@ function isMobile() {
 // UI
 function showInstallHint() {
   const bar = document.getElementById('export-bar');
-  if (!bar || document.getElementById('install-state-active')) return;
+  if (!bar || bar.dataset.installActive) return;
 
   bar.dataset.original = bar.innerHTML;
-  bar.id = 'install-state-active';
+  bar.dataset.installActive = "true";
 
   bar.innerHTML = `
     <div style="
       width: 100%;
       text-align: center;
-      font-family: Inter, system-ui, sans-serif;
-      font-weight: 500;
+      font-family: inherit;
       font-size: 13px;
-      letter-spacing: 0.02em;
-      color: rgba(255,255,255,0.85);
+      font-weight: 500;
+      color: var(--text);
       cursor: pointer;
-      padding: 14px 0;
+      letter-spacing: 0.01em;
     ">
       Install Unbroken on your home screen
-      <div style="opacity:0.5; font-size:11px; margin-top:4px;">
+      <div style="
+        font-size: 11px;
+        opacity: 0.6;
+        margin-top: 4px;
+        font-weight: 400;
+      ">
         for offline access
       </div>
     </div>
   `;
 
-  bar.style.borderTop = '1px solid rgba(255,255,255,0.12)';
-  bar.style.background = '#0e0e0e';
-  bar.style.borderRadius = '0px';
-
   bar.onclick = async () => {
-    if (!deferredPrompt) {
-      bar.style.opacity = '0';
-      setTimeout(() => bar.remove(), 200);
-      return;
-    }
+    if (!deferredPrompt) return;
 
     deferredPrompt.prompt();
-    const result = await deferredPrompt.userChoice;
+    await deferredPrompt.userChoice;
 
     deferredPrompt = null;
-
     restoreFooter();
   };
 
@@ -1164,17 +1159,13 @@ function showInstallHint() {
 }
 
 function restoreFooter() {
-  const bar = document.getElementById('install-state-active');
+  const bar = document.getElementById('export-bar');
   if (!bar || !bar.dataset.original) return;
 
   bar.innerHTML = bar.dataset.original;
-  bar.id = 'export-bar';
+  bar.dataset.installActive = "";
 
-  bar.style.borderTop = '';
-  bar.style.background = '';
-  bar.style.borderRadius = '';
-
-  delete bar.dataset.original;
+  bar.onclick = null;
 }
 
 // ── INIT ──
