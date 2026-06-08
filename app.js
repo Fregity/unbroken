@@ -1068,24 +1068,46 @@ function checkStreakRisk() {
   });
 }
 
+// ─────────────────────────────
+// PWA INSTALL SYSTEM
+// ─────────────────────────────
 
-// PWA DOWNLOAD
+let deferredPrompt = null;
+
+// register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        console.log('Service worker registered:', reg.scope);
-      })
-      .catch(err => {
-        console.log('Service worker failed:', err);
-      });
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW failed:', err));
   });
 }
 
+// capture install event (THIS IS REQUIRED)
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  if (shouldSuggestInstall() && habits.length > 0) {
+  showInstallHint();
+  }
+});
+
+// install condition
+function shouldSuggestInstall() {
+  const checkins = habits.reduce((sum, h) => sum + (h.checked?.length || 0), 0);
+  return habits.length >= 2 || checkins >= 3;
+}
+
+// UI
 function showInstallHint() {
+  if (document.getElementById('install-pill')) return;
+
   const el = document.createElement('div');
   el.id = 'install-pill';
+
   el.innerHTML = 'Install Unbroken for offline use →';
+
   el.style.cssText = `
     position: fixed;
     bottom: 90px;
@@ -1100,10 +1122,13 @@ function showInstallHint() {
   `;
 
   el.onclick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      el.innerHTML = 'Use browser menu → Add to Home Screen';
+      return;
+    }
 
     deferredPrompt.prompt();
-    const result = await deferredPrompt.userChoice;
+    await deferredPrompt.userChoice;
 
     deferredPrompt = null;
     el.remove();
@@ -1111,17 +1136,10 @@ function showInstallHint() {
 
   document.body.appendChild(el);
 
-  // auto-hide after a bit (keeps it non-intrusive)
-  setTimeout(() => el.remove(), 15000);
-}
-
-function shouldSuggestInstall() {
-  const checkins = habits.reduce((sum, h) => sum + (h.checked?.length || 0), 0);
-  return habits.length >= 2 || checkins >= 3;
-}
-
-if (shouldSuggestInstall()) {
-  showInstallHint();
+  setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+  }, 12000);
 }
 
 // ── INIT ──
