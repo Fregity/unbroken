@@ -1074,6 +1074,16 @@ function checkStreakRisk() {
 
 let deferredPrompt = null;
 
+function getExportBarHeight() {
+  const bar = document.getElementById('export-bar');
+  if (!bar) return 0;
+
+  const style = window.getComputedStyle(bar);
+  if (style.display === 'none') return 0;
+
+  return bar.offsetHeight;
+}
+
 // register service worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -1088,7 +1098,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
 
-  if (shouldSuggestInstall() && habits.length > 0) {
+  if ((isMobile() && shouldSuggestInstall()) && habits.length > 0) {
   showInstallHint();
   }
 });
@@ -1099,6 +1109,10 @@ function shouldSuggestInstall() {
   return habits.length >= 2 || checkins >= 3;
 }
 
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 // UI
 function showInstallHint() {
   if (document.getElementById('install-pill')) return;
@@ -1107,32 +1121,35 @@ function showInstallHint() {
   el.id = 'install-pill';
 
   el.innerHTML = `
-    <span>Install Unbroken</span>
-    <span style="opacity:0.6">›</span>
+    <div style="font-weight:500;">
+      Install Unbroken on your home screen
+    </div>
+    <div style="opacity:0.6; font-size:11px;">
+      for offline access
+    </div>
   `;
+
+  const barHeight = getExportBarHeight();
 
   el.style.cssText = `
     position: fixed;
-    bottom: 80px;
+    bottom: ${barHeight + 24}px;
     right: 20px;
 
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
 
-    padding: 10px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
+    padding: 12px 14px;
+    min-width: 240px;
 
-    background: rgba(22,22,22,0.92);
+    background: rgba(22,22,22,0.95);
     border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+
     color: rgba(255,255,255,0.85);
 
     cursor: pointer;
     z-index: 9999;
-
-    border-radius: 12px;
 
     box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     backdrop-filter: blur(10px);
