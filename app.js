@@ -1098,10 +1098,23 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
+});
 
-  if ((isMobile() && shouldSuggestInstall()) && habits.length > 0) {
-  showInstallHint();
-  }
+let installShown = false;
+
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (
+      installShown ||
+      !isMobile() ||
+      habits.length === 0 ||
+      !shouldSuggestInstall() ||
+      !deferredPrompt
+    ) return;
+
+    installShown = true;
+    showInstallHint();
+  }, 1500);
 });
 
 // install condition
@@ -1128,10 +1141,9 @@ function showInstallHint() {
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 200;
       color: var(--text);
-      cursor: pointer;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     ">
       // CLICK TO INSTALL UNBROKEN
@@ -1139,8 +1151,8 @@ function showInstallHint() {
         font-size: 11px;
         opacity: 0.6;
         margin-top: 4px;
-        font-weight: 400;
-        letter-spacing: 0.08em;
+        font-weight: 100;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
       ">
         ON YOUR HOMESCREEN · OFFLINE ACCESS
