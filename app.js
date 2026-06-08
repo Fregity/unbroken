@@ -1126,21 +1126,24 @@ function showInstallHint() {
     <div style="
       width: 100%;
       text-align: center;
-      font-family: inherit;
-      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
       font-weight: 500;
       color: var(--text);
       cursor: pointer;
-      letter-spacing: 0.01em;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     ">
-      Install Unbroken on your home screen
+      // CLICK TO INSTALL UNBROKEN
       <div style="
         font-size: 11px;
         opacity: 0.6;
         margin-top: 4px;
         font-weight: 400;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
       ">
-        for offline access
+        ON YOUR HOMESCREEN · OFFLINE ACCESS
       </div>
     </div>
   `;
@@ -1155,7 +1158,7 @@ function showInstallHint() {
     restoreFooter();
   };
 
-  setTimeout(restoreFooter, 12000);
+  setTimeout(restoreFooter, 8000);
 }
 
 function restoreFooter() {
