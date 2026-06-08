@@ -1140,18 +1140,20 @@ function showInstallHint() {
       width: 100%;
       text-align: center;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      font-weight: 200;
+      font-size: 14px;
+      font-weight: 400;
       color: var(--text);
       letter-spacing: 0.1em;
       text-transform: uppercase;
+      margin-top: 10px;
     ">
-      // CLICK TO INSTALL UNBROKEN
+      // CLICK HERE TO INSTALL UNBROKEN
       <div style="
-        font-size: 11px;
-        opacity: 0.6;
-        margin-top: 4px;
-        font-weight: 100;
+        font-size: 12px;
+        opacity: 0.4;
+        margin-top: 12px;
+        margin-bottom: 10px;
+        font-weight: 400;
         letter-spacing: 0.1em;
         text-transform: uppercase;
       ">
