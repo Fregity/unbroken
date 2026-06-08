@@ -1146,6 +1146,11 @@ function showInstallHint() {
       letter-spacing: 0.1em;
       text-transform: uppercase;
       margin-top: 8px;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -webkit-tap-highlight-color: transparent;
     ">
       // CLICK HERE TO INSTALL UNBROKEN
       <div style="
@@ -1156,6 +1161,11 @@ function showInstallHint() {
         font-weight: 400;
         letter-spacing: 0.1em;
         text-transform: uppercase;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-tap-highlight-color: transparent;
       ">
         ON YOUR HOMESCREEN · OFFLINE ACCESS
       </div>
