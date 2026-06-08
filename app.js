@@ -1106,20 +1106,41 @@ function showInstallHint() {
   const el = document.createElement('div');
   el.id = 'install-pill';
 
-  el.innerHTML = 'Install Unbroken for offline use →';
+  el.innerHTML = `
+    <span>Install Unbroken</span>
+    <span style="opacity:0.6">›</span>
+  `;
 
   el.style.cssText = `
     position: fixed;
-    bottom: 90px;
+    bottom: 80px;
     right: 20px;
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    color: #e8e8e8;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
     padding: 10px 14px;
     font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+
+    background: rgba(22,22,22,0.92);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+
     cursor: pointer;
     z-index: 9999;
+
+    border-radius: 12px;
+
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(10px);
+
+    transition: transform 0.15s ease, opacity 0.2s ease;
   `;
+
+  el.style.border = '1px solid rgba(255,255,255,0.18)';
 
   el.onclick = async () => {
     if (!deferredPrompt) {
