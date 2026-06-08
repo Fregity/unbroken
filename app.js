@@ -1068,6 +1068,54 @@ function checkStreakRisk() {
   });
 }
 
+
+// PWA DOWNLOAD
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
+
+function showInstallHint() {
+  const el = document.createElement('div');
+  el.id = 'install-pill';
+  el.innerHTML = 'Install Unbroken for offline use →';
+  el.style.cssText = `
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    color: #e8e8e8;
+    padding: 10px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 9999;
+  `;
+
+  el.onclick = async () => {
+    if (!deferredPrompt) return;
+
+    deferredPrompt.prompt();
+    const result = await deferredPrompt.userChoice;
+
+    deferredPrompt = null;
+    el.remove();
+  };
+
+  document.body.appendChild(el);
+
+  // auto-hide after a bit (keeps it non-intrusive)
+  setTimeout(() => el.remove(), 15000);
+}
+
+function shouldSuggestInstall() {
+  const checkins = habits.reduce((sum, h) => sum + (h.checked?.length || 0), 0);
+  return habits.length >= 2 || checkins >= 3;
+}
+
+if (shouldSuggestInstall()) {
+  showInstallHint();
+}
+
 // ── INIT ──
 loadData();
 render();
