@@ -1073,6 +1073,7 @@ function checkStreakRisk() {
 // ─────────────────────────────
 
 let deferredPrompt = null;
+const footer = document.getElementById('export-bar');
 
 function getExportBarHeight() {
   const bar = document.getElementById('export-bar');
@@ -1115,69 +1116,65 @@ function isMobile() {
 
 // UI
 function showInstallHint() {
-  if (document.getElementById('install-pill')) return;
+  const bar = document.getElementById('export-bar');
+  if (!bar || document.getElementById('install-state-active')) return;
 
-  const el = document.createElement('div');
-  el.id = 'install-pill';
+  bar.dataset.original = bar.innerHTML;
+  bar.id = 'install-state-active';
 
-  el.innerHTML = `
-    <div style="font-weight:500;">
+  bar.innerHTML = `
+    <div style="
+      width: 100%;
+      text-align: center;
+      font-family: Inter, system-ui, sans-serif;
+      font-weight: 500;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      color: rgba(255,255,255,0.85);
+      cursor: pointer;
+      padding: 14px 0;
+    ">
       Install Unbroken on your home screen
-    </div>
-    <div style="opacity:0.6; font-size:11px;">
-      for offline access
+      <div style="opacity:0.5; font-size:11px; margin-top:4px;">
+        for offline access
+      </div>
     </div>
   `;
 
-  const barHeight = getExportBarHeight();
+  bar.style.borderTop = '1px solid rgba(255,255,255,0.12)';
+  bar.style.background = '#0e0e0e';
+  bar.style.borderRadius = '0px';
 
-  el.style.cssText = `
-    position: fixed;
-    bottom: ${barHeight + 24}px;
-    right: 20px;
-
-    display: flex;
-    flex-direction: column;
-
-    padding: 12px 14px;
-    min-width: 240px;
-
-    background: rgba(22,22,22,0.95);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 12px;
-
-    color: rgba(255,255,255,0.85);
-
-    cursor: pointer;
-    z-index: 9999;
-
-    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    backdrop-filter: blur(10px);
-
-    transition: transform 0.15s ease, opacity 0.2s ease;
-  `;
-
-  el.style.border = '1px solid rgba(255,255,255,0.18)';
-
-  el.onclick = async () => {
+  bar.onclick = async () => {
     if (!deferredPrompt) {
-      el.innerHTML = 'Use browser menu → Add to Home Screen';
+      bar.innerHTML = `<div style="padding:14px;text-align:center;font-size:12px;opacity:0.7;">
+        Use browser menu → Add to Home Screen
+      </div>`;
       return;
     }
 
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
-
     deferredPrompt = null;
-    el.remove();
+
+    restoreFooter();
   };
 
-  document.body.appendChild(el);
+  setTimeout(restoreFooter, 12000);
+}
 
-  setTimeout(() => {
-    el.style.opacity = '0';
-    setTimeout(() => el.remove(), 300);
-  }, 12000);
+function restoreFooter() {
+  const bar = document.getElementById('install-state-active');
+  if (!bar || !bar.dataset.original) return;
+
+  bar.innerHTML = bar.dataset.original;
+  bar.id = 'export-bar';
+
+  bar.style.borderTop = '';
+  bar.style.background = '';
+  bar.style.borderRadius = '';
+
+  delete bar.dataset.original;
 }
 
 // ── INIT ──
