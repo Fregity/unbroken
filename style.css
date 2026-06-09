@@ -953,6 +953,12 @@ main {
     font-size: 11px;
     line-height: 1.2;
   }
+  .how-desc {
+    display: none;
+  }
+  .how-arrow {
+    display: none;
+  }
   #empty-state {
     padding-bottom: 40px;
   }
@@ -961,9 +967,6 @@ main {
   }
   .empty-sub {
     line-height: 1.4;
-  }
-  .how-desc {
-    display: none;
   }
 }
 
