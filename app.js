@@ -14,6 +14,7 @@ const COLORS = [
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DAYS   = ['','M','','W','','F',''];
+const header = document.querySelector('header');
 
 // ── STATE ──
 let habits = [];
@@ -1189,11 +1190,64 @@ function restoreFooter() {
 
   bar.onclick = null;
 }
-// Header something, idk
+
+// 
+// Header stuff
+//
+
 window.addEventListener('scroll', () => {
   const header = document.querySelector('header');
   header.classList.toggle('scrolled', window.scrollY > 20);
 });
+
+let target = 0;
+let current = 0;
+
+
+let lastScroll = 0;
+let velocity = 0;
+
+const start = { r: 14, g: 14, b: 14 };
+const end = { r: 25, g: 25, b: 25 };
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function animate() {
+  // fast scroll = low smoothing (snappy)
+  // slow scroll = high smoothing (smooth)
+
+  const speedFactor = Math.min(velocity / 30, 1);
+  const smoothing = 0.08 + (1 - speedFactor) * 0.2;
+  
+  current += (target - current) * smoothing;
+  const t = current;
+
+  // header styles
+  const padding = 16 - (t * 8);
+  header.style.paddingTop = padding + "px";
+  header.style.paddingBottom = padding + "px";
+
+  const bg = Math.round(14 + (11 * t));
+  header.style.backgroundColor = `rgb(${bg}, ${bg}, ${bg})`;
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+window.addEventListener('scroll', () => {
+  const maxScroll = 80;
+
+  const y = window.scrollY;
+  target = Math.min(y / maxScroll, 1);
+
+  velocity = Math.abs(y - lastScroll);
+  lastScroll = y;
+});
+
+animate();
 
 // ── INIT ──
 loadData();
