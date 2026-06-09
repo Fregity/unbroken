@@ -1148,11 +1148,11 @@ function showInstallHint() {
 
     <div class="export-actions">
       <button class="btn-export secondary" id="install-dismiss">
-        X NOT NOW
+        NOT NOW ✘
       </button>
 
       <button class="btn-export" id="install-confirm">
-        INSTALL
+        INSTALL ✔
       </button>
     </div>
   `;
