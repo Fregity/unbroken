@@ -1117,8 +1117,16 @@ window.addEventListener('load', () => {
   }, 1500);
 });
 
+
+
 // install condition
 function shouldSuggestInstall() {
+  const hiddenUntil = Number(
+    localStorage.getItem('installPromptHiddenUntil') || 0
+  );
+
+  if (Date.now() < hiddenUntil) return false;
+
   const checkins = habits.reduce((sum, h) => sum + (h.checked?.length || 0), 0);
   return habits.length >= 2 || checkins >= 3;
 }
@@ -1136,49 +1144,36 @@ function showInstallHint() {
   bar.dataset.installActive = "true";
 
   bar.innerHTML = `
-    <div style="
-      width: 100%;
-      text-align: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--text);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-top: 8px;
-      user-select: none;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    ">
-      // CLICK HERE TO INSTALL UNBROKEN
-      <div style="
-        font-size: 11px;
-        opacity: 0.4;
-        margin-top: 8px;
-        margin-bottom: 8px;
-        font-weight: 400;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        -webkit-tap-highlight-color: transparent;
-      ">
-        ON YOUR HOMESCREEN · OFFLINE ACCESS
-      </div>
+    <span class="export-label">// INSTALL UNBROKEN?</span>
+
+    <div class="export-actions">
+      <button class="btn-export secondary" id="install-dismiss">
+        X NOT NOW
+      </button>
+
+      <button class="btn-export" id="install-confirm">
+        INSTALL
+      </button>
     </div>
   `;
 
-  bar.onclick = async () => {
+  document.getElementById('install-dismiss').onclick = () => {
+    localStorage.setItem(
+      'installPromptHiddenUntil',
+      Date.now() + 1000 * 60 * 60 * 24 * 30
+    );
+
+    restoreFooter();
+  };
+
+  document.getElementById('install-confirm').onclick = async () => {
     if (!deferredPrompt) return;
 
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
 
     deferredPrompt = null;
+
     restoreFooter();
   };
 
