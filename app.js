@@ -1102,6 +1102,8 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 let installShown = false;
 
+let installPromptActive = false;
+
 window.addEventListener('load', () => {
   setTimeout(() => {
     if (
@@ -1117,10 +1119,10 @@ window.addEventListener('load', () => {
   }, 1500);
 });
 
-
-
 // install condition
 function shouldSuggestInstall() {
+  if (localStorage.getItem('installedPWA')) return false;
+
   const hiddenUntil = Number(
     localStorage.getItem('installPromptHiddenUntil') || 0
   );
@@ -1137,6 +1139,9 @@ function isMobile() {
 
 // UI
 function showInstallHint() {
+  if (installPromptActive) return;
+  installPromptActive = true;
+
   const bar = document.getElementById('export-bar');
   if (!bar || bar.dataset.installActive) return;
 
@@ -1160,7 +1165,7 @@ function showInstallHint() {
   document.getElementById('install-dismiss').onclick = () => {
     localStorage.setItem(
       'installPromptHiddenUntil',
-      Date.now() + 1000 * 60 * 60 * 24 * 30
+      Date.now() + 1000 * 60 * 60 * 24 * 7
     );
 
     restoreFooter();
@@ -1172,12 +1177,13 @@ function showInstallHint() {
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
 
-    deferredPrompt = null;
+    localStorage.setItem('installedPWA', 'true');
 
+    deferredPrompt = null;
     restoreFooter();
   };
 
-  setTimeout(restoreFooter, 8000);
+  setTimeout(restoreFooter, 180000);
 }
 
 function restoreFooter() {
