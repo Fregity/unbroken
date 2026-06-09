@@ -1189,6 +1189,11 @@ function restoreFooter() {
 
   bar.onclick = null;
 }
+// Header something, idk
+window.addEventListener('scroll', () => {
+  const header = document.querySelector('header');
+  header.classList.toggle('scrolled', window.scrollY > 20);
+});
 
 // ── INIT ──
 loadData();
